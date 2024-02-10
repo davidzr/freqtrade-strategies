@@ -47,9 +47,9 @@ class Fakebuy(IStrategy):
     # Stoploss:
     stoploss = -0.085
 
-    use_sell_signal = True
-    sell_profit_only = False
-    ignore_roi_if_buy_signal = True
+    use_exit_signal = True
+    exit_profit_only = False
+    ignore_roi_if_entry_signal = True
 
     startup_candle_count: int = 168
 
@@ -119,12 +119,12 @@ class Fakebuy(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         params = self.buy_params
         trade_data = self.custom_trade_info[metadata['pair']]
         conditions = []
 
-        # Persist a buy signal for existing trades to make use of ignore_roi_if_buy_signal = True
+        # Persist a buy signal for existing trades to make use of ignore_roi_if_entry_signal = True
         # when this buy signal is not present a sell can happen according to ROI table
         if trade_data['active_trade']:
             if (trade_data['peak_profit'] > 0):
@@ -166,7 +166,7 @@ class Fakebuy(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         trade_data = self.custom_trade_info[metadata['pair']]
         conditions = []
         
@@ -206,7 +206,7 @@ class Fakebuy(IStrategy):
         """
         # Using ticker seems significantly faster than orderbook.
         side = "asks"
-        if (self.config['ask_strategy']['price_side'] == "bid"):
+        if (self.config['exit_pricing']['price_side'] == "bid"):
             side = "bids"
         
         ob = self.dp.orderbook(pair, 1)

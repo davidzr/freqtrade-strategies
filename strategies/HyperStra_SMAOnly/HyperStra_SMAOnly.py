@@ -110,14 +110,14 @@ class HyperStra_SMAOnly(IStrategy):
 
     # Sell signal
     use_custom_stoploss = False
-    use_sell_signal = True
+    use_exit_signal = True
     timeframe = '5m'
-    ignore_roi_if_buy_signal = False
+    ignore_roi_if_entry_signal = False
     process_only_new_candles = False
     startup_candle_count = 440
 
-    sell_profit_only = False
-    sell_profit_offset = 0.01
+    exit_profit_only = False
+    exit_profit_offset = 0.01
 
     # ##################################################################
     # ##################################################################
@@ -204,7 +204,7 @@ class HyperStra_SMAOnly(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         conditions = []
 
         conditions.append(
@@ -242,7 +242,7 @@ class HyperStra_SMAOnly(IStrategy):
             dataframe.loc[reduce(lambda x, y: x | y, conditions), 'buy'] = 1
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         conditions = []
 
         conditions.append(

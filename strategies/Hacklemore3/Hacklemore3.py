@@ -34,10 +34,10 @@ class Hacklemore3(IStrategy):
     
     timeframe = '5m'
 
-    use_sell_signal = True
-    sell_profit_only = False
-    sell_profit_offset = 0.01
-    ignore_roi_if_buy_signal = True
+    use_exit_signal = True
+    exit_profit_only = False
+    exit_profit_offset = 0.01
+    ignore_roi_if_entry_signal = True
     
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         
@@ -53,7 +53,7 @@ class Hacklemore3(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 
         conditions = []
 
@@ -73,7 +73,7 @@ class Hacklemore3(IStrategy):
                 (dataframe['sar'].shift() < dataframe['close'].shift()) &
                 (dataframe['volume'] < (dataframe['volume_mean_slow'].shift(1) * 30))
             )
-        # Persist a buy signal for existing trades to make use of ignore_roi_if_buy_signal = True
+        # Persist a buy signal for existing trades to make use of ignore_roi_if_entry_signal = True
         # when this buy signal is not present a sell will happen according to ROI table
         else:
             conditions.append(dataframe['rmi'] >= 75) 
@@ -87,7 +87,7 @@ class Hacklemore3(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
     
         conditions = []
 

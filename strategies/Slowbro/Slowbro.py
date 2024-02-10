@@ -59,9 +59,9 @@ class Slowbro(IStrategy):
     timeframe = '1h'
     inf_timeframe = '1d'
 
-    use_sell_signal = True
-    sell_profit_only = True
-    ignore_roi_if_buy_signal = False
+    use_exit_signal = True
+    exit_profit_only = True
+    ignore_roi_if_entry_signal = False
 
     startup_candle_count: int = 30
     process_only_new_candles = False
@@ -83,7 +83,7 @@ class Slowbro(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                 qtpylib.crossed_above(dataframe['close'],dataframe[f"30d-low_{self.inf_timeframe}"])
@@ -92,7 +92,7 @@ class Slowbro(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                 qtpylib.crossed_above(dataframe['close'],dataframe[f"30d-high_{self.inf_timeframe}"])

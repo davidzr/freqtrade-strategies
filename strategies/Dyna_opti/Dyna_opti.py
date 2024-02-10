@@ -313,9 +313,9 @@ class Dyna_opti(IStrategy):
     #stoploss = -0.234
 
     # Recommended
-    use_sell_signal = False
-    sell_profit_only = False
-    ignore_roi_if_buy_signal = True
+    use_exit_signal = False
+    exit_profit_only = False
+    ignore_roi_if_entry_signal = True
 
     # Required
     startup_candle_count: int = 233
@@ -426,7 +426,7 @@ class Dyna_opti(IStrategy):
     """
     Buy Signal
     """ 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         conditions = []
         if self.inf_guard.value == 'upper' or self.inf_guard.value == 'both':
             conditions.append(
@@ -462,7 +462,7 @@ class Dyna_opti(IStrategy):
     """
     Sell Signal
     """
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
   
         dataframe['sell'] = 0
 
@@ -564,17 +564,17 @@ class Dyna_opti(IStrategy):
     Trade Timeout Overloads
     """
     def check_buy_timeout(self, pair: str, trade: Trade, order: dict, **kwargs) -> bool:
-        bid_strategy = self.config.get('bid_strategy', {})
+        entry_pricing = self.config.get('entry_pricing', {})
         ob = self.dp.orderbook(pair, 1)
-        current_price = ob[f"{bid_strategy['price_side']}s"][0][0]
+        current_price = ob[f"{entry_pricing['price_side']}s"][0][0]
         if current_price > order['price'] * 1.01:
             return True
         return False
 
     def check_sell_timeout(self, pair: str, trade: Trade, order: dict, **kwargs) -> bool:
-        ask_strategy = self.config.get('ask_strategy', {})
+        exit_pricing = self.config.get('exit_pricing', {})
         ob = self.dp.orderbook(pair, 1)
-        current_price = ob[f"{ask_strategy['price_side']}s"][0][0]
+        current_price = ob[f"{exit_pricing['price_side']}s"][0][0]
         if current_price < order['price'] * 0.99:
             return True
         return False
@@ -627,10 +627,10 @@ class Dyna_opti(IStrategy):
             if rate:
                 return rate
 
-        ask_strategy = self.config.get('ask_strategy', {})
-        if ask_strategy.get('use_order_book', False):
+        exit_pricing = self.config.get('exit_pricing', {})
+        if exit_pricing.get('use_order_book', False):
             ob = self.dp.orderbook(pair, 1)
-            rate = ob[f"{ask_strategy['price_side']}s"][0][0]
+            rate = ob[f"{exit_pricing['price_side']}s"][0][0]
         else:
             ticker = self.dp.ticker(pair)
             rate = ticker['last']

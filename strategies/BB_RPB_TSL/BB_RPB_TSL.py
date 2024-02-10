@@ -227,7 +227,7 @@ class BB_RPB_TSL(IStrategy):
 
     # Custom stoploss
     use_custom_stoploss = True
-    use_sell_signal = True
+    use_exit_signal = True
 
     ############################################################################
 
@@ -457,7 +457,7 @@ class BB_RPB_TSL(IStrategy):
         return sl_new
 
     # From NFIX
-    def custom_sell(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float,
+    def custom_exit(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float,
                     current_profit: float, **kwargs):
 
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
@@ -469,75 +469,75 @@ class BB_RPB_TSL(IStrategy):
         max_profit = ((trade.max_rate - trade.open_rate) / trade.open_rate)
         max_loss = ((trade.open_rate - trade.min_rate) / trade.min_rate)
 
-        buy_tag = 'empty'
-        if hasattr(trade, 'buy_tag') and trade.buy_tag is not None:
-            buy_tag = trade.buy_tag
-        buy_tags = buy_tag.split()
+        enter_tag = 'empty'
+        if hasattr(trade, 'enter_tag') and trade.enter_tag is not None:
+            enter_tag = trade.enter_tag
+        enter_tags = enter_tag.split()
 
         # sell trail
         if 0.012 > current_profit >= 0.0:
             if (max_profit > (current_profit + 0.045)) and (last_candle['rsi'] < 46.0):
-                return f"sell_profit_t_0_1( {buy_tag})"
+                return f"sell_profit_t_0_1( {enter_tag})"
             elif (max_profit > (current_profit + 0.025)) and (last_candle['rsi'] < 32.0):
-                return f"sell_profit_t_0_2( {buy_tag})"
+                return f"sell_profit_t_0_2( {enter_tag})"
             elif (max_profit > (current_profit + 0.05)) and (last_candle['rsi'] < 48.0):
-                return f"sell_profit_t_0_3( {buy_tag})"
+                return f"sell_profit_t_0_3( {enter_tag})"
         elif 0.02 > current_profit >= 0.012:
             if (max_profit > (current_profit + 0.01)) and (last_candle['rsi'] < 39.0):
-                return f"sell_profit_t_1_1( {buy_tag})"
+                return f"sell_profit_t_1_1( {enter_tag})"
             elif (max_profit > (current_profit + 0.035)) and (last_candle['rsi'] < 45.0) and (last_candle['cmf'] < -0.0) and (last_candle['cmf_1h'] < -0.0):
-                return f"sell_profit_t_1_2( {buy_tag})"
+                return f"sell_profit_t_1_2( {enter_tag})"
             elif (max_profit > (current_profit + 0.02)) and (last_candle['rsi'] < 40.0) and (last_candle['cmf'] < -0.0) and (last_candle['cti_1h'] > 0.8):
-                return f"sell_profit_t_1_4( {buy_tag})"
+                return f"sell_profit_t_1_4( {enter_tag})"
             elif (max_profit > (current_profit + 0.04)) and (last_candle['rsi'] < 49.0) and (last_candle['cmf_1h'] < -0.0):
-                return f"sell_profit_t_1_5( {buy_tag})"
+                return f"sell_profit_t_1_5( {enter_tag})"
             elif (max_profit > (current_profit + 0.06)) and (last_candle['rsi'] < 43.0) and (last_candle['cmf'] < -0.0):
-                return f"sell_profit_t_1_7( {buy_tag})"
+                return f"sell_profit_t_1_7( {enter_tag})"
             elif (max_profit > (current_profit + 0.025)) and (last_candle['rsi'] < 40.0) and (last_candle['cmf'] < -0.1) and (last_candle['rsi_1h'] < 50.0):
-                return f"sell_profit_t_1_9( {buy_tag})"
+                return f"sell_profit_t_1_9( {enter_tag})"
             elif (max_profit > (current_profit + 0.025)) and (last_candle['rsi'] < 46.0) and (last_candle['cmf'] < -0.0) and (last_candle['r_480_1h'] > -20.0):
-                return f"sell_profit_t_1_10( {buy_tag})"
+                return f"sell_profit_t_1_10( {enter_tag})"
             elif (max_profit > (current_profit + 0.025)) and (last_candle['rsi'] < 42.0):
-                return f"sell_profit_t_1_11( {buy_tag})"
+                return f"sell_profit_t_1_11( {enter_tag})"
             elif (max_profit > (current_profit + 0.01)) and (last_candle['rsi'] < 44.0) and (last_candle['cmf'] < -0.25):
-                return f"sell_profit_t_1_12( {buy_tag})"
+                return f"sell_profit_t_1_12( {enter_tag})"
 
         # sell cti_r
         if 0.012 > current_profit >= 0.0 :
             if (last_candle['cti'] > self.sell_cti_r_cti.value) and (last_candle['r_14'] > self.sell_cti_r_r.value):
-                return f"sell_profit_t_cti_r_0_1( {buy_tag})"
+                return f"sell_profit_t_cti_r_0_1( {enter_tag})"
 
         # main sell
         if current_profit > 0.02:
             if (last_candle['momdiv_sell_1h'] == True):
-                return f"signal_profit_q_momdiv_1h( {buy_tag})"
+                return f"signal_profit_q_momdiv_1h( {enter_tag})"
             if (last_candle['momdiv_sell'] == True):
-                return f"signal_profit_q_momdiv( {buy_tag})"
+                return f"signal_profit_q_momdiv( {enter_tag})"
             if (last_candle['momdiv_coh'] == True):
-                return f"signal_profit_q_momdiv_coh( {buy_tag})"
+                return f"signal_profit_q_momdiv_coh( {enter_tag})"
 
         # sell bear
         if last_candle['close'] < last_candle['ema_200']:
             if 0.02 > current_profit >= 0.01:
                 if (last_candle['rsi'] < 34.0) and (last_candle['cmf'] < 0.0):
-                    return f"sell_profit_u_bear_1_1( {buy_tag})"
+                    return f"sell_profit_u_bear_1_1( {enter_tag})"
                 elif (last_candle['rsi'] < 44.0) and (last_candle['cmf'] < -0.4):
-                    return f"sell_profit_u_bear_1_2( {buy_tag})"
+                    return f"sell_profit_u_bear_1_2( {enter_tag})"
 
         # sell quick
         if (0.06 > current_profit > 0.02) and (last_candle['rsi'] > 80.0):
-            return f"signal_profit_q_1( {buy_tag})"
+            return f"signal_profit_q_1( {enter_tag})"
 
         if (0.06 > current_profit > 0.02) and (last_candle['cti'] > 0.95):
-            return f"signal_profit_q_2( {buy_tag})"
+            return f"signal_profit_q_2( {enter_tag})"
 
         if (0.06 > current_profit > 0.02) and (last_candle['pm'] <= last_candle['pmax_thresh']) and (last_candle['close'] > last_candle['sma_21'] * 1.1):
-            return f"signal_profit_q_pmax_bull( {buy_tag})"
+            return f"signal_profit_q_pmax_bull( {enter_tag})"
         if (0.06 > current_profit > 0.02) and (last_candle['pm'] > last_candle['pmax_thresh']) and (last_candle['close'] > last_candle['sma_21'] * 1.016):
-            return f"signal_profit_q_pmax_bear( {buy_tag})"
+            return f"signal_profit_q_pmax_bear( {enter_tag})"
 
         # sell scalp
-        if (current_profit > 0 and buy_tag in [ 'nfix_39 ']):
+        if (current_profit > 0 and enter_tag in [ 'nfix_39 ']):
             if (
                     (current_profit > 0)
                     and (last_candle['fisher'] > 0.39075)
@@ -547,7 +547,7 @@ class BB_RPB_TSL(IStrategy):
                     and (last_candle['ema_4'] > last_candle['ha_close'])
                     and (last_candle['ha_close'] * 0.99754 > last_candle['bb_middleband2'])
                 ):
-                return f"sell_scalp( {buy_tag})"
+                return f"sell_scalp( {enter_tag})"
 
         if (
                 (current_profit < -0.05)
@@ -557,7 +557,7 @@ class BB_RPB_TSL(IStrategy):
                 and last_candle['rsi'] > previous_candle_1['rsi']
                 and (last_candle['rsi'] > (last_candle['rsi_1h'] + 10.0))
             ):
-            return f"sell_stoploss_u_e_1( {buy_tag})"
+            return f"sell_stoploss_u_e_1( {enter_tag})"
 
         # stoploss - deadfish
         if (    (current_profit < self.sell_deadfish_profit.value)
@@ -566,7 +566,7 @@ class BB_RPB_TSL(IStrategy):
                 and (last_candle['close'] > last_candle['bb_middleband2'] * self.sell_deadfish_bb_factor.value)
                 and (last_candle['volume_mean_12'] < last_candle['volume_mean_24'] * self.sell_deadfish_volume_factor.value)
             ):
-            return f"sell_stoploss_deadfish( {buy_tag})"
+            return f"sell_stoploss_deadfish( {enter_tag})"
 
         # stoploss - bleeding
         #if (    (current_profit < -0.05)
@@ -575,7 +575,7 @@ class BB_RPB_TSL(IStrategy):
                 #and (last_candle['r_14_mean_24'] < self.sell_bleeding_r14.value)
                 #and (last_candle['volume_mean_12'] < last_candle['volume_mean_24'] * self.sell_bleeding_volume_factor.value)
             #):
-            #return f"sell_stoploss_bleeding( {buy_tag})"
+            #return f"sell_stoploss_bleeding( {enter_tag})"
 
         return None
 
@@ -779,10 +779,10 @@ class BB_RPB_TSL(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 
         conditions = []
-        dataframe.loc[:, 'buy_tag'] = ''
+        dataframe.loc[:, 'enter_tag'] = ''
 
         is_dip = (
                 (dataframe[f'rmi_length_{self.buy_rmi_length.value}'] < self.buy_rmi.value) &
@@ -985,61 +985,61 @@ class BB_RPB_TSL(IStrategy):
 
         ## Condition Append
         conditions.append(is_BB_checked)                                           # ~2.32 / 91.1% / 46.27%      D
-        dataframe.loc[is_BB_checked, 'buy_tag'] += 'bb '
+        dataframe.loc[is_BB_checked, 'enter_tag'] += 'bb '
 
         conditions.append(is_local_uptrend)                                        # ~3.28 / 92.4% / 69.72%
-        dataframe.loc[is_local_uptrend, 'buy_tag'] += 'local_uptrend '
+        dataframe.loc[is_local_uptrend, 'enter_tag'] += 'local_uptrend '
 
         conditions.append(is_local_dip)                                            # ~0.76 / 91.1% / 15.54%
-        dataframe.loc[is_local_dip, 'buy_tag'] += 'local_dip '
+        dataframe.loc[is_local_dip, 'enter_tag'] += 'local_dip '
 
         conditions.append(is_ewo)                                                  # ~0.92 / 92.0% / 43.74%      D
-        dataframe.loc[is_ewo, 'buy_tag'] += 'ewo '
+        dataframe.loc[is_ewo, 'enter_tag'] += 'ewo '
 
         conditions.append(is_ewo_2)                                                 # ~2.86 / 91.5% / 33.31%     D
-        dataframe.loc[is_ewo_2, 'buy_tag'] += 'ewo2 '
+        dataframe.loc[is_ewo_2, 'enter_tag'] += 'ewo2 '
 
         conditions.append(is_r_deadfish)                                           # ~0.99 / 86.9% / 21.93%      D
-        dataframe.loc[is_r_deadfish, 'buy_tag'] += 'r_deadfish '
+        dataframe.loc[is_r_deadfish, 'enter_tag'] += 'r_deadfish '
 
         conditions.append(is_clucHA)                                               # ~7.2 / 92.5% / 97.98%       D
-        dataframe.loc[is_clucHA, 'buy_tag'] += 'clucHA '
+        dataframe.loc[is_clucHA, 'enter_tag'] += 'clucHA '
 
         conditions.append(is_cofi)                                                 # ~0.4 / 94.4% / 9.59%        D
-        dataframe.loc[is_cofi, 'buy_tag'] += 'cofi '
+        dataframe.loc[is_cofi, 'enter_tag'] += 'cofi '
 
         conditions.append(is_gumbo)                                                # ~2.63 / 90.6% / 41.49%      D
-        dataframe.loc[is_gumbo, 'buy_tag'] += 'gumbo '
+        dataframe.loc[is_gumbo, 'enter_tag'] += 'gumbo '
 
         conditions.append(is_sqzmom)                                               # ~3.14 / 92.4% / 64.14%      D
-        dataframe.loc[is_sqzmom, 'buy_tag'] += 'sqzmom '
+        dataframe.loc[is_sqzmom, 'enter_tag'] += 'sqzmom '
 
         conditions.append(is_nfi_13)                                               # ~0.4 / 100%                 D
-        dataframe.loc[is_nfi_13, 'buy_tag'] += 'nfi_13 '
+        dataframe.loc[is_nfi_13, 'enter_tag'] += 'nfi_13 '
 
         conditions.append(is_nfi_32)                                               # ~0.78 / 92.0 % / 37.41%     D
-        dataframe.loc[is_nfi_32, 'buy_tag'] += 'nfi_32 '
+        dataframe.loc[is_nfi_32, 'enter_tag'] += 'nfi_32 '
 
         conditions.append(is_nfi_33)                                               # ~0.11 / 100%                D
-        dataframe.loc[is_nfi_33, 'buy_tag'] += 'nfi_33 '
+        dataframe.loc[is_nfi_33, 'enter_tag'] += 'nfi_33 '
 
         conditions.append(is_nfi_38)                                               # ~1.13 / 88.5% / 31.34%      D
-        dataframe.loc[is_nfi_38, 'buy_tag'] += 'nfi_38 '
+        dataframe.loc[is_nfi_38, 'enter_tag'] += 'nfi_38 '
 
         conditions.append(is_nfix_5)                                               # ~0.25 / 97.7% / 6.53%       D
-        dataframe.loc[is_nfix_5, 'buy_tag'] += 'nfix_5 '
+        dataframe.loc[is_nfix_5, 'enter_tag'] += 'nfix_5 '
 
         conditions.append(is_nfix_39)                                              # ~5.33 / 91.8% / 58.57%      D
-        dataframe.loc[is_nfix_39, 'buy_tag'] += 'nfix_39 '
+        dataframe.loc[is_nfix_39, 'enter_tag'] += 'nfix_39 '
 
         conditions.append(is_nfix_49)                                              # ~0.33 / 100% / 0%           D
-        dataframe.loc[is_nfix_49, 'buy_tag'] += 'nfix_49 '
+        dataframe.loc[is_nfix_49, 'enter_tag'] += 'nfix_49 '
 
         conditions.append(is_nfi7_33)                                              # ~0.71 / 91.3% / 28.94%      D
-        dataframe.loc[is_nfi7_33, 'buy_tag'] += 'nfi7_33 '
+        dataframe.loc[is_nfi7_33, 'enter_tag'] += 'nfi7_33 '
 
         conditions.append(is_nfi7_37)                                              # ~0.46 / 92.6% / 17.05%      D
-        dataframe.loc[is_nfi7_37, 'buy_tag'] += 'nfi7_37 '
+        dataframe.loc[is_nfi7_37, 'enter_tag'] += 'nfi7_37 '
 
         if conditions:
             dataframe.loc[
@@ -1051,7 +1051,7 @@ class BB_RPB_TSL(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 
         dataframe.loc[ (dataframe['volume'] > 0), 'sell' ] = 0
 

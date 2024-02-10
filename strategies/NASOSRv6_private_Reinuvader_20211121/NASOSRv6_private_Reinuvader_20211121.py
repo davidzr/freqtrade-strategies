@@ -125,10 +125,10 @@ class NASOSRv6_private_Reinuvader_20211121(IStrategy):
     #trailing_only_offset_is_reached = True
 
     # Sell signal
-    use_sell_signal = True
-    #sell_profit_only = False
-    #sell_profit_offset = -0.0001
-    #ignore_roi_if_buy_signal = False
+    use_exit_signal = True
+    #exit_profit_only = False
+    #exit_profit_offset = -0.0001
+    #ignore_roi_if_entry_signal = False
 
     # Optional order time in force.
     order_time_in_force = {
@@ -166,7 +166,7 @@ class NASOSRv6_private_Reinuvader_20211121(IStrategy):
         'max_slippage': -0.02
     }
 
-    def custom_sell(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float, current_profit: float, **kwargs):
+    def custom_exit(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float, current_profit: float, **kwargs):
         if ((current_time - trade.open_date_utc).seconds / 60 > 1440):
             return 'unclog'
 
@@ -190,7 +190,7 @@ class NASOSRv6_private_Reinuvader_20211121(IStrategy):
         last_candle = dataframe.iloc[-1]
 
         if (last_candle is not None):
-            if (sell_reason in ['sell_signal']):
+            if (sell_reason in ['exit_signal']):
                 if (last_candle['hma_50']*1.149 > last_candle['ema_100']) and (last_candle['close'] < last_candle['ema_100']*0.951):  # *1.2
                     return False
 
@@ -212,12 +212,12 @@ class NASOSRv6_private_Reinuvader_20211121(IStrategy):
         state[pair] = 0
 
         if hasattr(last_candle, 'sell_tag') and str(last_candle.sell_tag) != "nan":
-            if (sell_reason == "sell_signal"):
+            if (sell_reason == "exit_signal"):
                 sell_reason = last_candle.sell_tag
             else:
                 sell_reason += last_candle.sell_tag
 
-        trade.sell_reason = f"{trade.buy_tag}->{sell_reason}"
+        trade.sell_reason = f"{trade.enter_tag}->{sell_reason}"
 
         return True
 
@@ -378,7 +378,7 @@ class NASOSRv6_private_Reinuvader_20211121(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 
         dont_buy_conditions = []
         dont_buy_conditions.append(
@@ -403,7 +403,7 @@ class NASOSRv6_private_Reinuvader_20211121(IStrategy):
                     (dataframe['close'] < (
                             dataframe[f'ma_sell_{self.base_nb_candles_sell.value}'] * self.high_offset.value))
             ),
-            ['buy', 'buy_tag']] = (1, 'ewo1')
+            ['enter_long', 'enter_tag']] = (1, 'ewo1')
 
         dataframe.loc[
             (
@@ -415,7 +415,7 @@ class NASOSRv6_private_Reinuvader_20211121(IStrategy):
                     (dataframe['close'] < (dataframe[f'ma_sell_{self.base_nb_candles_sell.value}'] * self.high_offset.value)) &
                     (dataframe['rsi'] < 25)
             ),
-            ['buy', 'buy_tag']] = (1, 'ewo2')
+            ['enter_long', 'enter_tag']] = (1, 'ewo2')
 
 
         dataframe.loc[
@@ -427,7 +427,7 @@ class NASOSRv6_private_Reinuvader_20211121(IStrategy):
                     (dataframe['close'] < (
                             dataframe[f'ma_sell_{self.base_nb_candles_sell.value}'] * self.high_offset.value))
             ),
-            ['buy', 'buy_tag']] = (1, 'ewolow')
+            ['enter_long', 'enter_tag']] = (1, 'ewolow')
 
         # This produces around 0.85% - 1.0% profitable trades but long durations so decided against it.
         # dataframe.loc[
@@ -441,7 +441,7 @@ class NASOSRv6_private_Reinuvader_20211121(IStrategy):
         #         (dataframe['rsi_36'] < 0.55) &
         #         (dataframe['uptrend'] < 1)
         #     ),
-        #     ['buy', 'buy_tag']] = (1, 'MacD')
+        #     ['enter_long', 'enter_tag']] = (1, 'MacD')
 
         if dont_buy_conditions:
             for condition in dont_buy_conditions:
@@ -467,7 +467,7 @@ class NASOSRv6_private_Reinuvader_20211121(IStrategy):
                      )
                  )
             ),
-            ['buy', 'buy_tag']] = (1, 'clucHA')
+            ['enter_long', 'enter_tag']] = (1, 'clucHA')
 
         # This does not fit well the protections for EWO buys.
         dataframe.loc[
@@ -510,11 +510,11 @@ class NASOSRv6_private_Reinuvader_20211121(IStrategy):
                     )
                 )
             ),
-            ['buy', 'buy_tag']] = (1, 'zema')
+            ['enter_long', 'enter_tag']] = (1, 'zema')
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         conditions = []
 
         conditions.append(

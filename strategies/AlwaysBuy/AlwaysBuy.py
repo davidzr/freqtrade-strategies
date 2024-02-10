@@ -1,4 +1,4 @@
-from freqtrade.strategy.interface import IStrategy
+from freqtrade.strategy import IStrategy
 from pandas import DataFrame
 
 
@@ -34,8 +34,7 @@ class AlwaysBuy(IStrategy):
         return dataframe
 
     def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-
-        dataframe.loc[:, ["enter_long", "enter_tag"]] = (1, "entry_reason")
+        dataframe.loc[:, ["enter_long"]] = 1
 
         return dataframe
 

@@ -119,9 +119,9 @@ class ClucHAnix5m(IStrategy):
     timeframe = '5m'
 
     # Make sure these match or are not overridden in config
-    use_sell_signal = True
-    sell_profit_only = False
-    ignore_roi_if_buy_signal = False
+    use_exit_signal = True
+    exit_profit_only = False
+    ignore_roi_if_entry_signal = False
 
     # Custom stoploss
     use_custom_stoploss = True
@@ -338,9 +338,9 @@ class ClucHAnix5m(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         conditions = []
-        dataframe.loc[:, 'buy_tag'] = ''
+        dataframe.loc[:, 'enter_tag'] = ''
 
         dataframe[f'ma_buy_{self.ewo_candles_buy.value}'] = ta.EMA(dataframe, timeperiod=int(self.ewo_candles_buy.value))
         dataframe[f'ma_sell_{self.ewo_candles_sell.value}'] = ta.EMA(dataframe, timeperiod=int(self.ewo_candles_sell.value))
@@ -360,7 +360,7 @@ class ClucHAnix5m(IStrategy):
             (dataframe['rsi_4'] < int(self.lambo1_rsi_4_limit.value)) &
             (dataframe['rsi_14'] < int(self.lambo1_rsi_14_limit.value))
         )
-        dataframe.loc[lambo1, 'buy_tag'] += 'lambo1_'
+        dataframe.loc[lambo1, 'enter_tag'] += 'lambo1_'
         conditions.append(lambo1)
 
         lambo2 = (
@@ -369,7 +369,7 @@ class ClucHAnix5m(IStrategy):
             (dataframe['rsi_4'] < int(self.lambo2_rsi_4_limit.value)) &
             (dataframe['rsi_14'] < int(self.lambo2_rsi_14_limit.value))
         )
-        dataframe.loc[lambo2, 'buy_tag'] += 'lambo2_'
+        dataframe.loc[lambo2, 'enter_tag'] += 'lambo2_'
         conditions.append(lambo2)
 
         local_uptrend = (
@@ -380,7 +380,7 @@ class ClucHAnix5m(IStrategy):
             (dataframe['close'] < dataframe['bb_lowerband2'] * self.local_trend_bb_factor.value) &
             (dataframe['closedelta'] > dataframe['close'] * self.local_trend_closedelta.value / 1000 )
         )
-        dataframe.loc[local_uptrend, 'buy_tag'] += 'local_uptrend_'
+        dataframe.loc[local_uptrend, 'enter_tag'] += 'local_uptrend_'
         conditions.append(local_uptrend)
 
         nfi_32 = (
@@ -391,7 +391,7 @@ class ClucHAnix5m(IStrategy):
             (dataframe['close'] < dataframe['sma_15'] * self.nfi32_sma_factor.value) &
             (dataframe['cti'] < self.nfi32_cti_limit.value)
         )
-        dataframe.loc[nfi_32, 'buy_tag'] += 'nfi_32_'
+        dataframe.loc[nfi_32, 'enter_tag'] += 'nfi_32_'
         conditions.append(nfi_32)
 
         ewo_1 = (
@@ -402,7 +402,7 @@ class ClucHAnix5m(IStrategy):
             (dataframe['rsi_14'] < self.ewo_1_rsi_14.value) &
             (dataframe['close'] < (dataframe[f'ma_sell_{self.ewo_candles_sell.value}'] * self.ewo_high_offset.value))
         )
-        dataframe.loc[ewo_1, 'buy_tag'] += 'ewo1_'
+        dataframe.loc[ewo_1, 'enter_tag'] += 'ewo1_'
         conditions.append(ewo_1)
 
         ewo_low = (
@@ -412,7 +412,7 @@ class ClucHAnix5m(IStrategy):
             (dataframe['EWO'] < self.ewo_low.value) &
             (dataframe['close'] < (dataframe[f'ma_sell_{self.ewo_candles_sell.value}'] * self.ewo_high_offset.value))
         )
-        dataframe.loc[ewo_low, 'buy_tag'] += 'ewo_low_'
+        dataframe.loc[ewo_low, 'enter_tag'] += 'ewo_low_'
         conditions.append(ewo_low)
 
         cofi = (
@@ -424,7 +424,7 @@ class ClucHAnix5m(IStrategy):
             (dataframe['adx'] > self.cofi_adx.value) &
             (dataframe['EWO'] > self.cofi_ewo_high.value)
         )
-        dataframe.loc[cofi, 'buy_tag'] += 'cofi_'
+        dataframe.loc[cofi, 'enter_tag'] += 'cofi_'
         conditions.append(cofi)
 
         clucHA = (
@@ -443,7 +443,7 @@ class ClucHAnix5m(IStrategy):
                 (dataframe['ha_close'] < self.clucha_close_bblower.value * dataframe['bb_lowerband'])
             ))
         )
-        dataframe.loc[clucHA, 'buy_tag'] += 'clucHA_'
+        dataframe.loc[clucHA, 'enter_tag'] += 'clucHA_'
         conditions.append(clucHA)
 
         dataframe.loc[
@@ -455,7 +455,7 @@ class ClucHAnix5m(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         params = self.sell_params
         
         dataframe.loc[
@@ -476,7 +476,7 @@ class ClucHAnix5m(IStrategy):
                            rate: float, time_in_force: str, sell_reason: str,
                            current_time: datetime, **kwargs) -> bool:
 
-        trade.sell_reason = sell_reason + "_" + trade.buy_tag
+        trade.sell_reason = sell_reason + "_" + trade.enter_tag
 
         return True
 
@@ -513,7 +513,7 @@ class ClucHAnix_BB_RPB_MOD2_ROI_DYNAMIC_TB(ClucHAnix5m):
         'trailing_buy_order_started': False,
         'trailing_buy_order_uplimit': 0,
         'start_trailing_price': 0,
-        'buy_tag': None,
+        'enter_tag': None,
         'start_trailing_time': None,
         'offset': 0,
         'allow_trailing': True,
@@ -631,7 +631,7 @@ class ClucHAnix_BB_RPB_MOD2_ROI_DYNAMIC_TB(ClucHAnix5m):
                             trailing_buy['trailing_buy_order_started'] = True
                             trailing_buy['trailing_buy_order_uplimit'] = last_candle['close']
                             trailing_buy['start_trailing_price'] = last_candle['close']
-                            trailing_buy['buy_tag'] = last_candle['buy_tag']
+                            trailing_buy['enter_tag'] = last_candle['enter_tag']
                             trailing_buy['start_trailing_time'] = datetime.now(timezone.utc)
                             trailing_buy['offset'] = 0
                             
@@ -685,8 +685,8 @@ class ClucHAnix_BB_RPB_MOD2_ROI_DYNAMIC_TB(ClucHAnix5m):
         
         return val
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        dataframe = super().populate_buy_trend(dataframe, metadata)
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+        dataframe = super().populate_entry_trend(dataframe, metadata)
 
         if self.trailing_buy_order_enabled and self.config['runmode'].value in ('live', 'dry_run'): 
             last_candle = dataframe.iloc[-1].squeeze()
@@ -698,13 +698,13 @@ class ClucHAnix_BB_RPB_MOD2_ROI_DYNAMIC_TB(ClucHAnix5m):
                         logger.info(f"Set 'allow_trailing' to True for {metadata['pair']} to start trailing!!!")
                         # self.custom_info_trail_buy[metadata['pair']]['trailing_buy']['allow_trailing'] = True
                         trailing_buy['allow_trailing'] = True
-                        initial_buy_tag = last_candle['buy_tag'] if 'buy_tag' in last_candle else 'buy signal'
-                        dataframe.loc[:, 'buy_tag'] = f"{initial_buy_tag} (start trail price {last_candle['close']})"
+                        initial_enter_tag = last_candle['enter_tag'] if 'enter_tag' in last_candle else 'buy signal'
+                        dataframe.loc[:, 'enter_tag'] = f"{initial_enter_tag} (start trail price {last_candle['close']})"
             else:
                 if (trailing_buy['trailing_buy_order_started'] == True):
                     logger.info(f"Continue trailing for {metadata['pair']}. Manually trigger buy signal!!")
                     dataframe.loc[:,'buy'] = 1
-                    dataframe.loc[:, 'buy_tag'] = trailing_buy['buy_tag']
+                    dataframe.loc[:, 'enter_tag'] = trailing_buy['enter_tag']
                     # dataframe['buy'] = 1
 
         return dataframe

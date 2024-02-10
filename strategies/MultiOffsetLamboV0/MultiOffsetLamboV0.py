@@ -127,17 +127,17 @@ class MultiOffsetLamboV0(IStrategy):
     trailing_only_offset_is_reached = True
 
     # Sell signal
-    use_sell_signal = True
-    sell_profit_only = True
-    sell_profit_offset = 0.01
-    ignore_roi_if_buy_signal = True
+    use_exit_signal = True
+    exit_profit_only = True
+    exit_profit_offset = 0.01
+    ignore_roi_if_entry_signal = True
 
     # Optimal timeframe for the strategy
     timeframe = '5m'
     informative_timeframe = '1h'
 
-    use_sell_signal = True
-    sell_profit_only = False
+    use_exit_signal = True
+    exit_profit_only = False
 
     process_only_new_candles = True
     startup_candle_count = 30
@@ -167,7 +167,7 @@ class MultiOffsetLamboV0(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         conditions = []
 
         for i in self.ma_types:
@@ -188,7 +188,7 @@ class MultiOffsetLamboV0(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         conditions = []
 
         for i in self.ma_types:

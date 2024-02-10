@@ -63,8 +63,8 @@ class SMAOffset(IStrategy):
 	# Optimal timeframe for the strategy
 	timeframe = '5m'
 
-	use_sell_signal = True
-	sell_profit_only = False
+	use_exit_signal = True
+	exit_profit_only = False
 
 	process_only_new_candles = True
 	startup_candle_count = 30
@@ -88,7 +88,7 @@ class SMAOffset(IStrategy):
 			dataframe['ma_offset_sell'] = ma_types[self.sell_trigger.value](dataframe, int(self.base_nb_candles_sell.value)) * self.high_offset.value
 		return dataframe
 
-	def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+	def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 		if self.config['runmode'].value == 'hyperopt':
 			dataframe['ma_offset_buy'] = ma_types[self.buy_trigger.value](dataframe, int(self.base_nb_candles_buy.value)) * self.low_offset.value
 
@@ -100,7 +100,7 @@ class SMAOffset(IStrategy):
 			'buy'] = 1
 		return dataframe
 
-	def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+	def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 		if self.config['runmode'].value == 'hyperopt':
 			dataframe['ma_offset_sell'] = ma_types[self.sell_trigger.value](dataframe, int(self.base_nb_candles_sell.value)) * self.high_offset.value
 

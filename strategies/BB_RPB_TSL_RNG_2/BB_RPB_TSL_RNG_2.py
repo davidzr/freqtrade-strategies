@@ -111,7 +111,7 @@ class BB_RPB_TSL_RNG_2(IStrategy):
 
     # Custom stoploss
     use_custom_stoploss = True
-    use_sell_signal = True
+    use_exit_signal = True
 
     ############################################################################
 
@@ -324,11 +324,11 @@ class BB_RPB_TSL_RNG_2(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 
 
         conditions = []
-        dataframe.loc[:, 'buy_tag'] = ''
+        dataframe.loc[:, 'enter_tag'] = ''
 
         if self.buy_is_dip_enabled.value:
 
@@ -424,32 +424,32 @@ class BB_RPB_TSL_RNG_2(IStrategy):
 
         ## condition append
         conditions.append(is_BB_checked)          # ~1.7 89%
-        dataframe.loc[is_BB_checked, 'buy_tag'] += 'bb '
+        dataframe.loc[is_BB_checked, 'enter_tag'] += 'bb '
 
         conditions.append(is_local_uptrend)       # ~3.84 90.2%
-        dataframe.loc[is_local_uptrend, 'buy_tag'] += 'local uptrend '
+        dataframe.loc[is_local_uptrend, 'enter_tag'] += 'local uptrend '
 
         conditions.append(is_ewo)                 # ~2.26 93.5%
-        dataframe.loc[is_ewo, 'buy_tag'] += 'ewo '
+        dataframe.loc[is_ewo, 'enter_tag'] += 'ewo '
 
         conditions.append(is_ewo_2)               # ~3.68 90.3%
-        dataframe.loc[is_ewo_2, 'buy_tag'] += 'ewo2 '
+        dataframe.loc[is_ewo_2, 'enter_tag'] += 'ewo2 '
 
         conditions.append(is_cofi)                # ~3.21 90.8%
-        dataframe.loc[is_cofi, 'buy_tag'] += 'cofi '
+        dataframe.loc[is_cofi, 'enter_tag'] += 'cofi '
 
         conditions.append(is_nfi_32)              # ~2.43 91.3%
-        dataframe.loc[is_nfi_32, 'buy_tag'] += 'nfi 32 '
+        dataframe.loc[is_nfi_32, 'enter_tag'] += 'nfi 32 '
 
         conditions.append(is_nfi_33)              # ~0.11 100%
-        dataframe.loc[is_nfi_33, 'buy_tag'] += 'nfi 33 '
+        dataframe.loc[is_nfi_33, 'enter_tag'] += 'nfi 33 '
 
         if conditions:
             dataframe.loc[reduce(lambda x, y: x | y, conditions), 'buy' ] = 1
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         conditions = []
 
         conditions.append(

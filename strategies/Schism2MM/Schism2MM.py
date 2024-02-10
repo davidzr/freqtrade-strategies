@@ -38,9 +38,9 @@ class Schism2MM(IStrategy):
 
     stoploss = -0.99
 
-    use_sell_signal = False
-    sell_profit_only = False
-    ignore_roi_if_buy_signal = True
+    use_exit_signal = False
+    exit_profit_only = False
+    ignore_roi_if_entry_signal = True
 
     startup_candle_count: int = 72
 
@@ -81,7 +81,7 @@ class Schism2MM(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         params = self.buy_params
         trade_data = self.custom_trade_info[metadata['pair']]
         conditions = []
@@ -112,7 +112,7 @@ class Schism2MM(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         params = self.sell_params
         trade_data = self.custom_trade_info[metadata['pair']]
         conditions = []
@@ -197,10 +197,10 @@ class Schism2MM(IStrategy):
             if rate:
                 return rate
 
-        ask_strategy = self.config.get('ask_strategy', {})
-        if ask_strategy.get('use_order_book', False):
+        exit_pricing = self.config.get('exit_pricing', {})
+        if exit_pricing.get('use_order_book', False):
             ob = self.dp.orderbook(pair, 1)
-            rate = ob[f"{ask_strategy['price_side']}s"][0][0]
+            rate = ob[f"{exit_pricing['price_side']}s"][0][0]
         else:
             ticker = self.dp.ticker(pair)
             rate = ticker['last']
@@ -214,25 +214,25 @@ class Schism2MM(IStrategy):
         return min(end, start + (rate * trade_time))
 
     def check_buy_timeout(self, pair: str, trade: Trade, order: dict, **kwargs) -> bool:
-        bid_strategy = self.config.get('bid_strategy', {})
+        entry_pricing = self.config.get('entry_pricing', {})
         ob = self.dp.orderbook(pair, 1)
-        current_price = ob[f"{bid_strategy['price_side']}s"][0][0]
+        current_price = ob[f"{entry_pricing['price_side']}s"][0][0]
         if current_price > order['price'] * 1.01:
             return True
         return False
 
     def check_sell_timeout(self, pair: str, trade: Trade, order: dict, **kwargs) -> bool:
-        ask_strategy = self.config.get('ask_strategy', {})
+        exit_pricing = self.config.get('exit_pricing', {})
         ob = self.dp.orderbook(pair, 1)
-        current_price = ob[f"{ask_strategy['price_side']}s"][0][0]
+        current_price = ob[f"{exit_pricing['price_side']}s"][0][0]
         if current_price < order['price'] * 0.99:
             return True
         return False
 
     def confirm_trade_entry(self, pair: str, order_type: str, amount: float, rate: float, time_in_force: str, **kwargs) -> bool:
-        bid_strategy = self.config.get('bid_strategy', {})
+        entry_pricing = self.config.get('entry_pricing', {})
         ob = self.dp.orderbook(pair, 1)
-        current_price = ob[f"{bid_strategy['price_side']}s"][0][0]
+        current_price = ob[f"{entry_pricing['price_side']}s"][0][0]
         if current_price > rate * 1.01:
             return False
         return True

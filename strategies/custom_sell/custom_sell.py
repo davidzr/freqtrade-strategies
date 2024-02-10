@@ -24,7 +24,7 @@ import arrow
 from freqtrade.exchange import timeframe_to_minutes
 import time
 
-class custom_sell(IStrategy):
+class custom_exit(IStrategy):
     custom_info = {}
 
     buy_signal_buy6 = CategoricalParameter([True, False], default=True, space="buy", optimize=False)
@@ -88,30 +88,30 @@ class custom_sell(IStrategy):
     startup_candle_count = 450
     process_only_new_candles = True
 
-    use_sell_signal = True
-    sell_profit_only = False
-    ignore_roi_if_buy_signal = False
+    use_exit_signal = True
+    exit_profit_only = False
+    ignore_roi_if_entry_signal = False
 
     # Custom stoploss
     use_custom_stoploss = False
 
-    def custom_sell(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float,
+    def custom_exit(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float,
                     current_profit: float, **kwargs):
 
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
         last_candle = dataframe.iloc[-1].squeeze()
 
-        if trade.buy_tag:
-           buy_tag = trade.buy_tag
+        if trade.enter_tag:
+           enter_tag = trade.enter_tag
 
-        if buy_tag == 'buy6':
+        if enter_tag == 'buy6':
 
            if current_profit > 0:
               #print("selling " + str(current_profit))
-              return 'plus0percent' + '_' + buy_tag
+              return 'plus0percent' + '_' + enter_tag
            elif current_profit < 0:
               #print("selling " + str(current_profit))
-              return 'minus0percent' + '_' + buy_tag
+              return 'minus0percent' + '_' + enter_tag
 
     def confirm_trade_exit(self, pair: str, trade: Trade, order_type: str, amount: float,
                            rate: float, time_in_force: str, sell_reason: str, **kwargs) -> bool:
@@ -119,11 +119,11 @@ class custom_sell(IStrategy):
         #last_candle = dataframe.iloc[-1].squeeze()
 
 
-        if (sell_reason == 'roi') & (trade.buy_tag == "buy6"):
-            #print("REJECTED: " + trade.buy_tag + "/" + sell_reason)
+        if (sell_reason == 'roi') & (trade.enter_tag == "buy6"):
+            #print("REJECTED: " + trade.enter_tag + "/" + sell_reason)
             return False
 
-        #print("SOLD: " + trade.buy_tag + "/" + sell_reason)
+        #print("SOLD: " + trade.enter_tag + "/" + sell_reason)
         return True
 
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
@@ -144,7 +144,7 @@ class custom_sell(IStrategy):
         dataframe['keltner_upper'] = keltner['upper']
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         # BUY6
         if (self.buy_signal_buy6.value):
           dataframe.loc[
@@ -153,11 +153,11 @@ class custom_sell(IStrategy):
                (dataframe['close'] > dataframe['keltner_middle'])
              )
            ),
-           ['buy', 'buy_tag']] = (1, 'buy6')
+           ['enter_long', 'enter_tag']] = (1, 'buy6')
 
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[:, 'sell'] = 0
         return dataframe

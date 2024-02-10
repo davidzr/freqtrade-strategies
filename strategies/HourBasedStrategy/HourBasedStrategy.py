@@ -85,7 +85,7 @@ class HourBasedStrategy(IStrategy):
         dataframe['hour'] = dataframe['date'].dt.hour
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         min, max = self.buy_hour_min.value, self.buy_hour_max.value
         dataframe.loc[
             (
@@ -95,7 +95,7 @@ class HourBasedStrategy(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         min, max = self.sell_hour_min.value, self.sell_hour_max.value
         dataframe.loc[
             (

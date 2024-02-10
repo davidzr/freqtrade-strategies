@@ -22,9 +22,9 @@ class Momentumv2(IStrategy):
     use_custom_stoploss = True
     trailing_stop = False
     timeframe = '4h'
-    use_sell_signal = True
-    sell_profit_only = False
-    ignore_roi_if_buy_signal = False
+    use_exit_signal = True
+    exit_profit_only = False
+    ignore_roi_if_entry_signal = False
     startup_candle_count: int = 100
     order_types = {
         'buy': 'limit',
@@ -93,7 +93,7 @@ class Momentumv2(IStrategy):
 
         return 1
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         conditions = []
         conditions.append(qtpylib.crossed_above(dataframe['macd'], dataframe['macdsignal']))
         conditions.append(dataframe['close'] > dataframe['ema'])
@@ -106,7 +106,7 @@ class Momentumv2(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         conditions = []
         conditions.append(qtpylib.crossed_below(dataframe['macd'], dataframe['macdsignal']) | (
             qtpylib.crossed_below(dataframe['rsi'], self.sell_rsi.value)))

@@ -191,15 +191,15 @@ class MultiMA_TSL3_Mod(IStrategy):
     # Run "populate_indicators()" only for new candle.
     process_only_new_candles = True
 
-    # These values can be overridden in the "ask_strategy" section in the config.
-    use_sell_signal = True
-    sell_profit_only = False
-    ignore_roi_if_buy_signal = False
+    # These values can be overridden in the "exit_pricing" section in the config.
+    use_exit_signal = True
+    exit_profit_only = False
+    ignore_roi_if_entry_signal = False
 
     # Number of candles the strategy requires before producing valid signals
     startup_candle_count: int = 400
 
-    def custom_sell(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float,
+    def custom_exit(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float,
                     current_profit: float, **kwargs):
        
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
@@ -227,18 +227,18 @@ class MultiMA_TSL3_Mod(IStrategy):
                     self.custom_info[pair][self.SELL_TRIGGER] = 1
                     return False
 
-                buy_tag = 'empty'
+                enter_tag = 'empty'
 
-                if hasattr(trade, 'buy_tag') and trade.buy_tag is not None:
-                    buy_tag = trade.buy_tag
+                if hasattr(trade, 'enter_tag') and trade.enter_tag is not None:
+                    enter_tag = trade.enter_tag
                 else:
                     trade_open_date = timeframe_to_prev_date(self.timeframe, trade.open_date_utc)
                     buy_signal = dataframe.loc[dataframe['date'] < trade_open_date]
                     if not buy_signal.empty:
                         buy_signal_candle = buy_signal.iloc[-1]
-                        buy_tag = buy_signal_candle['buy_tag'] if buy_signal_candle['buy_tag'] != '' else 'empty'
+                        enter_tag = buy_signal_candle['enter_tag'] if buy_signal_candle['enter_tag'] != '' else 'empty'
 
-                return f'New Sell Signal ({buy_tag})'
+                return f'New Sell Signal ({enter_tag})'
         
         return False
 
@@ -360,13 +360,13 @@ class MultiMA_TSL3_Mod(IStrategy):
         
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         conditions = []
         """dataframe['ema_offset_buy'] = ta.EMA(dataframe, int(self.base_nb_candles_buy_ema.value)) *self.low_offset_ema.value
         dataframe['ema_offset_buy2'] = ta.EMA(dataframe, int(self.base_nb_candles_buy_ema2.value)) *self.low_offset_ema2.value"""
         dataframe['ema_sell'] = ta.EMA(dataframe, int(self.base_nb_candles_ema_sell.value))   
         
-        dataframe.loc[:, 'buy_tag'] = ''
+        dataframe.loc[:, 'enter_tag'] = ''
         dataframe.loc[:, 'buy_copy'] = 0
         dataframe.loc[:, 'buy'] = 0
 
@@ -391,7 +391,7 @@ class MultiMA_TSL3_Mod(IStrategy):
                     #(dataframe['high_rising'] == 1)
                 )
             )
-            dataframe.loc[buy_offset_ema, 'buy_tag'] += 'ema '
+            dataframe.loc[buy_offset_ema, 'enter_tag'] += 'ema '
             conditions.append(buy_offset_ema)
 
         """if (self.buy_condition_zema_enable.value):
@@ -410,7 +410,7 @@ class MultiMA_TSL3_Mod(IStrategy):
                     (dataframe['pm'] > dataframe['pmax_thresh'])
                 )
             )
-            dataframe.loc[buy_offset_zema, 'buy_tag'] += 'zema '
+            dataframe.loc[buy_offset_zema, 'enter_tag'] += 'zema '
             conditions.append(buy_offset_zema)
 
         if (self.buy_condition_hma_enable.value):
@@ -439,7 +439,7 @@ class MultiMA_TSL3_Mod(IStrategy):
                 (dataframe['rsi_fast'] < 30)
                 
             )
-            dataframe.loc[buy_offset_hma, 'buy_tag'] += 'hma '
+            dataframe.loc[buy_offset_hma, 'enter_tag'] += 'hma '
             conditions.append(buy_offset_hma)"""
 
         add_check = (
@@ -533,7 +533,7 @@ class MultiMA_TSL3_Mod(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[:, 'sell'] = 0
 
         return dataframe

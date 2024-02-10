@@ -144,9 +144,9 @@ class LuxOSC(IStrategy):
     process_only_new_candles = False
 
   
-    use_sell_signal = True
-    sell_profit_only = False
-    ignore_roi_if_buy_signal = False
+    use_exit_signal = True
+    exit_profit_only = False
+    ignore_roi_if_entry_signal = False
 
    
     startup_candle_count: int = 30
@@ -185,7 +185,7 @@ class LuxOSC(IStrategy):
         dataframe['osc'],  dataframe['signal'] , dataframe['histogram'], dataframe['supertrend'] = LUX_SuperTrendOscillator(dataframe, length = int(self.length_buy.value), mult = int(self.mult_buy.value), smooth = int(self.smooth_buy.value)) 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                 
@@ -196,7 +196,7 @@ class LuxOSC(IStrategy):
             'buy'] = 1
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                 (qtpylib.crossed_below(dataframe['osc'], int(self.cross_sell.value))) &  

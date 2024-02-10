@@ -113,10 +113,10 @@ class NASOSv5_mod2(IStrategy):
 
 
     # Sell signal
-    use_sell_signal = True
-    sell_profit_only = False
-    sell_profit_offset = 0.01
-    ignore_roi_if_buy_signal = False
+    use_exit_signal = True
+    exit_profit_only = False
+    exit_profit_offset = 0.01
+    ignore_roi_if_entry_signal = False
 
     # Optional order time in force.
     order_time_in_force = {
@@ -212,7 +212,7 @@ class NASOSv5_mod2(IStrategy):
         last_candle = dataframe.iloc[-1]
 
         if (last_candle is not None):
-            if (sell_reason in ['sell_signal']):
+            if (sell_reason in ['exit_signal']):
                 if (last_candle['hma_50']*1.149 > last_candle['ema_100']) and (last_candle['close'] < last_candle['ema_100']*0.951):  # *1.2
                     return False
 
@@ -335,7 +335,7 @@ class NASOSv5_mod2(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 
         dont_buy_conditions = []
 
@@ -358,7 +358,7 @@ class NASOSv5_mod2(IStrategy):
                     dataframe[f'ma_sell_{self.base_nb_candles_sell.value}'] * self.high_offset.value))&
                 (dataframe['rsi'] < 31)
             ),
-            ['buy', 'buy_tag']] = (1, 'ewo1')
+            ['enter_long', 'enter_tag']] = (1, 'ewo1')
 
         dataframe.loc[
             (
@@ -370,7 +370,7 @@ class NASOSv5_mod2(IStrategy):
                 (dataframe['close'] < (dataframe[f'ma_sell_{self.base_nb_candles_sell.value}'] * self.high_offset.value)) &
                 (dataframe['rsi'] < 25)
             ),
-            ['buy', 'buy_tag']] = (1, 'ewo2')
+            ['enter_long', 'enter_tag']] = (1, 'ewo2')
 
         dataframe.loc[
             (
@@ -381,7 +381,7 @@ class NASOSv5_mod2(IStrategy):
                 (dataframe['close'] < (
                     dataframe[f'ma_sell_{self.base_nb_candles_sell.value}'] * self.high_offset.value))
             ),
-            ['buy', 'buy_tag']] = (1, 'ewolow')
+            ['enter_long', 'enter_tag']] = (1, 'ewolow')
 
         if dont_buy_conditions:
             for condition in dont_buy_conditions:
@@ -389,7 +389,7 @@ class NASOSv5_mod2(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         conditions = []
 
         conditions.append(
@@ -454,7 +454,7 @@ class NASOSv5HO(NASOSv5_mod2):
     trailing_only_offset_is_reached = True  # value loaded from strategy
 
 class NASOSv5PD(NASOSv5_mod2):
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 
         dont_buy_conditions = []
 
@@ -482,7 +482,7 @@ class NASOSv5PD(NASOSv5_mod2):
                     dataframe[f'ma_sell_{self.base_nb_candles_sell.value}'] * self.high_offset.value))&
                 (dataframe['rsi'] < 75)
             ),
-            ['buy', 'buy_tag']] = (1, 'ewo1')
+            ['enter_long', 'enter_tag']] = (1, 'ewo1')
 
         dataframe.loc[
             (
@@ -494,7 +494,7 @@ class NASOSv5PD(NASOSv5_mod2):
                 (dataframe['close'] < (dataframe[f'ma_sell_{self.base_nb_candles_sell.value}'] * self.high_offset.value)) &
                 (dataframe['rsi'] < 35)
             ),
-            ['buy', 'buy_tag']] = (1, 'ewo2')
+            ['enter_long', 'enter_tag']] = (1, 'ewo2')
 
         dataframe.loc[
             (
@@ -505,7 +505,7 @@ class NASOSv5PD(NASOSv5_mod2):
                 (dataframe['close'] < (
                     dataframe[f'ma_sell_{self.base_nb_candles_sell.value}'] * self.high_offset.value))
             ),
-            ['buy', 'buy_tag']] = (1, 'ewolow')
+            ['enter_long', 'enter_tag']] = (1, 'ewolow')
 
         if dont_buy_conditions:
             for condition in dont_buy_conditions:
@@ -577,15 +577,15 @@ class TrailingBuyStrat(NASOSv5_mod2):
 
     custom_info = dict() # custom_info should be a dict
 
-    def custom_sell(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
+    def custom_exit(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
                     current_profit: float, **kwargs):
-        tag = super(TrailingBuyStrat, self).custom_sell(pair, trade, current_time, current_rate, current_profit, **kwargs)
+        tag = super(TrailingBuyStrat, self).custom_exit(pair, trade, current_time, current_rate, current_profit, **kwargs)
         if tag:
             self.custom_info[pair]['trailing_buy'] = {
                 'trailing_buy_order_started': False,
                 'trailing_buy_order_uplimit': 0,
                 'start_trailing_price': 0,
-                'buy_tag': None
+                'enter_tag': None
             }
             logger.info(f'STOP trailing buy for {pair} because of {tag}')
         return tag
@@ -599,7 +599,7 @@ class TrailingBuyStrat(NASOSv5_mod2):
                 'trailing_buy_order_started': False,
                 'trailing_buy_order_uplimit': 0,
                 'start_trailing_price': 0,
-                'buy_tag': None
+                'enter_tag': None
             }
         return dataframe
 
@@ -609,16 +609,16 @@ class TrailingBuyStrat(NASOSv5_mod2):
         self.custom_info[pair]['trailing_buy']['trailing_buy_order_started'] = False
         self.custom_info[pair]['trailing_buy']['trailing_buy_order_uplimit'] = 0
         self.custom_info[pair]['trailing_buy']['start_trailing_price'] = 0
-        self.custom_info[pair]['trailing_buy']['buy_tag'] = None
+        self.custom_info[pair]['trailing_buy']['enter_tag'] = None
         return val
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         def get_local_min(x):
             win = dataframe.loc[:, 'barssince_last_buy'].iloc[x.shape[0] - 1].astype('int')
             win = max(win, 0)
             return pd.Series(x).rolling(window=win).min().iloc[-1]
 
-        dataframe = super(TrailingBuyStrat, self).populate_buy_trend(dataframe, metadata)
+        dataframe = super(TrailingBuyStrat, self).populate_entry_trend(dataframe, metadata)
         dataframe = dataframe.rename(columns={"buy": "pre_buy"})
 
         if self.trailing_buy_order_enabled and self.config['runmode'].value in ('live', 'dry_run'):  # trailing live dry ticker, 1m
@@ -631,7 +631,7 @@ class TrailingBuyStrat(NASOSv5_mod2):
             if not self.custom_info[metadata["pair"]]['trailing_buy']['trailing_buy_order_started'] and last_candle['pre_buy'] == 1:
                 self.custom_info[metadata["pair"]]['trailing_buy']['trailing_buy_order_started'] = True
                 self.custom_info[metadata["pair"]]['trailing_buy']['start_trailing_price'] = last_candle['close']
-                self.custom_info[metadata["pair"]]['trailing_buy']['buy_tag'] = last_candle['buy_tag']
+                self.custom_info[metadata["pair"]]['trailing_buy']['enter_tag'] = last_candle['enter_tag']
                 self.custom_info[metadata["pair"]]['trailing_buy']['trailing_buy_order_uplimit'] = last_candle[f'close']
                 logger.info(f'start trailing buy for {metadata["pair"]} at {last_candle["close"]}')
             elif self.custom_info[metadata["pair"]]['trailing_buy']['trailing_buy_order_started']:
@@ -641,12 +641,12 @@ class TrailingBuyStrat(NASOSv5_mod2):
                 elif current_price < self.custom_info[metadata["pair"]]['trailing_buy']['start_trailing_price']:
                     dataframe.iloc[-1, dataframe.columns.get_loc('buy')] = 1
                     ratio = "%.2f" % ((current_price / self.custom_info[metadata['pair']]['trailing_buy']['start_trailing_price']) * 100)
-                    dataframe.iloc[-1, dataframe.columns.get_loc('buy_tag')] = f"{self.custom_info[metadata['pair']]['trailing_buy']['buy_tag']} ({ratio} %)"
+                    dataframe.iloc[-1, dataframe.columns.get_loc('enter_tag')] = f"{self.custom_info[metadata['pair']]['trailing_buy']['enter_tag']} ({ratio} %)"
                     # stop trailing when buy signal ! prevent from buyin much higher price when slot is free
                     self.custom_info[metadata["pair"]]['trailing_buy']['trailing_buy_order_started'] = False
                     self.custom_info[metadata["pair"]]['trailing_buy']['trailing_buy_order_uplimit'] = 0
                     self.custom_info[metadata["pair"]]['trailing_buy']['start_trailing_price'] = None
-                    self.custom_info[metadata["pair"]]['trailing_buy']['buy_tag'] = None
+                    self.custom_info[metadata["pair"]]['trailing_buy']['enter_tag'] = None
                 else:
                     logger.info(f'price to high for {metadata["pair"]} at {current_price} vs {self.custom_info[metadata["pair"]]["trailing_buy"]["trailing_buy_order_uplimit"]}')
         elif self.trailing_buy_order_enabled:

@@ -24,7 +24,7 @@ class UziChan2(IStrategy):
     stoploss = -0.10
     timeframe = '1m'
 
-    def custom_sell(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float, current_profit: float, **kwargs):     
+    def custom_exit(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float, current_profit: float, **kwargs):     
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)        
         if current_profit*100 > 1: 
             logger.info(f'custom sell for {pair} at {current_rate}')
@@ -49,7 +49,7 @@ class UziChan2(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                 ((dataframe['close'] < dataframe['uc_low']) | (dataframe['open'] < dataframe['uc_low'])) &
@@ -58,7 +58,7 @@ class UziChan2(IStrategy):
             'buy'] = 1
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                 (dataframe['high'] > dataframe['uc_up']) &
@@ -95,14 +95,14 @@ class UziChanTB2(UziChan2):
     trailing_sell_max_stop = 0.02   # stop trailing sell if current_price < starting_price * (1+trailing_buy_max_stop)
     trailing_sell_max_sell = 0.000  # sell if price between downlimit (=max of serie (current_price * (1 + trailing_sell_offset())) and (start_price * 1+trailing_sell_max_sell))
 
-    abort_trailing_when_sell_signal_triggered = True
+    abort_trailing_when_exit_signal_triggered = True
 
 
     init_trailing_buy_dict = {
         'trailing_buy_order_started': False,
         'trailing_buy_order_uplimit': 0,  
         'start_trailing_price': 0,
-        'buy_tag': None,
+        'enter_tag': None,
         'start_trailing_time': None,
         'offset': 0,
         'allow_trailing': False,
@@ -319,7 +319,7 @@ class UziChanTB2(UziChan2):
                                 trailing_buy['trailing_buy_order_started'] = True
                                 trailing_buy['trailing_buy_order_uplimit'] = last_candle['close']
                                 trailing_buy['start_trailing_price'] = last_candle['close']
-                                trailing_buy['buy_tag'] = last_candle['buy_tag']
+                                trailing_buy['enter_tag'] = last_candle['enter_tag']
                                 trailing_buy['start_trailing_time'] = datetime.now(timezone.utc)
                                 trailing_buy['offset'] = 0
                                 
@@ -446,14 +446,14 @@ class UziChanTB2(UziChan2):
                     self.trailing_sell(pair, reinit=True)
                     logger.info(f'STOP trailing sell for {pair} because I SOLD it')
 
-        if sell_reason != 'sell_signal':
+        if sell_reason != 'exit_signal':
             val = True
 
         return val
 
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        dataframe = super().populate_buy_trend(dataframe, metadata)
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+        dataframe = super().populate_entry_trend(dataframe, metadata)
 
         if self.trailing_buy_order_enabled and self.config['runmode'].value in ('live', 'dry_run'): 
             last_candle = dataframe.iloc[-1].squeeze()
@@ -465,21 +465,21 @@ class UziChanTB2(UziChan2):
                         logger.info(f"Set 'allow_trailing' to True for {metadata['pair']} to start trailing!!!")
                         # self.custom_info_trail_buy[metadata['pair']]['trailing_buy']['allow_trailing'] = True
                         trailing_buy['allow_trailing'] = True
-                        initial_buy_tag = last_candle['buy_tag'] if 'buy_tag' in last_candle else 'buy signal'
-                        dataframe.loc[:, 'buy_tag'] = f"{initial_buy_tag} (start trail price {last_candle['close']})"                        
+                        initial_enter_tag = last_candle['enter_tag'] if 'enter_tag' in last_candle else 'buy signal'
+                        dataframe.loc[:, 'enter_tag'] = f"{initial_enter_tag} (start trail price {last_candle['close']})"                        
             else:
                 if (trailing_buy['trailing_buy_order_started'] == True):
                     logger.info(f"Continue trailing for {metadata['pair']}. Manually trigger buy signal!!")
                     dataframe.loc[:,'buy'] = 1
-                    dataframe.loc[:, 'buy_tag'] = trailing_buy['buy_tag']
+                    dataframe.loc[:, 'enter_tag'] = trailing_buy['enter_tag']
 
         return dataframe
 
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        dataframe = super().populate_sell_trend(dataframe, metadata)
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+        dataframe = super().populate_exit_trend(dataframe, metadata)
 
-        if self.trailing_buy_order_enabled and self.abort_trailing_when_sell_signal_triggered and self.config['runmode'].value in ('live', 'dry_run'):
+        if self.trailing_buy_order_enabled and self.abort_trailing_when_exit_signal_triggered and self.config['runmode'].value in ('live', 'dry_run'):
             last_candle = dataframe.iloc[-1].squeeze()
             if (last_candle['sell'] != 0):
                 trailing_buy = self.trailing_buy(metadata['pair'])

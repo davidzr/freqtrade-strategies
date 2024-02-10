@@ -36,9 +36,9 @@ log = logging.getLogger(__name__)
 ##   Highly recommended to blacklist leveraged tokens (*BULL, *BEAR, *UP, *DOWN etc).                    ##
 ##   Ensure that you don't override any variables in you config.json. Especially                         ##
 ##   the timeframe (must be 5m).                                                                         ##
-##     use_sell_signal must set to true (or not set at all).                                             ##
-##     sell_profit_only must set to false (or not set at all).                                           ##
-##     ignore_roi_if_buy_signal must set to true (or not set at all).                                    ##
+##     use_exit_signal must set to true (or not set at all).                                             ##
+##     exit_profit_only must set to false (or not set at all).                                           ##
+##     ignore_roi_if_entry_signal must set to true (or not set at all).                                    ##
 ##                                                                                                       ##
 ###########################################################################################################
 ##               HOLD SUPPORT                                                                            ##
@@ -79,7 +79,7 @@ class NostalgiaForInfinityNext_ChangeToTower_V6(IStrategy):
              },
         'subplots': {
             "buy tag": {
-                'buy_tag': {'color': 'green'}
+                'enter_tag': {'color': 'green'}
             },
         }
     }
@@ -118,10 +118,10 @@ class NostalgiaForInfinityNext_ChangeToTower_V6(IStrategy):
     # Run "populate_indicators()" only for new candle.
     process_only_new_candles = True
 
-    # These values can be overridden in the "ask_strategy" section in the config.
-    use_sell_signal = True
-    sell_profit_only = False
-    ignore_roi_if_buy_signal = True
+    # These values can be overridden in the "exit_pricing" section in the config.
+    use_exit_signal = True
+    exit_profit_only = False
+    ignore_roi_if_entry_signal = True
 
     # Number of candles the strategy requires before producing valid signals
     startup_candle_count: int = 480
@@ -2312,7 +2312,7 @@ class NostalgiaForInfinityNext_ChangeToTower_V6(IStrategy):
 
         return False, None
 
-    def custom_sell(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float,
+    def custom_exit(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float,
                     current_profit: float, **kwargs):
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
         last_candle = dataframe.iloc[-1]
@@ -2322,167 +2322,167 @@ class NostalgiaForInfinityNext_ChangeToTower_V6(IStrategy):
         previous_candle_4 = dataframe.iloc[-5]
         previous_candle_5 = dataframe.iloc[-6]
 
-        buy_tag = 'empty'
-        if hasattr(trade, 'buy_tag') and trade.buy_tag is not None:
-            buy_tag = trade.buy_tag
+        enter_tag = 'empty'
+        if hasattr(trade, 'enter_tag') and trade.enter_tag is not None:
+            enter_tag = trade.enter_tag
         else:
             trade_open_date = timeframe_to_prev_date(self.timeframe, trade.open_date_utc)
             buy_signal = dataframe.loc[dataframe['date'] < trade_open_date]
             if not buy_signal.empty:
                 buy_signal_candle = buy_signal.iloc[-1]
-                buy_tag = buy_signal_candle['buy_tag'] if buy_signal_candle['buy_tag'] != '' else 'empty'
-        buy_tags = buy_tag.split()
+                enter_tag = buy_signal_candle['enter_tag'] if buy_signal_candle['enter_tag'] != '' else 'empty'
+        enter_tags = enter_tag.split()
         max_profit = ((trade.max_rate - trade.open_rate) / trade.open_rate)
         max_loss = ((trade.open_rate - trade.min_rate) / trade.min_rate)
 
         # Quick sell mode
-        if all(c in ['32', '33', '34', '35', '36', '37', '38', '40'] for c in buy_tags):
+        if all(c in ['32', '33', '34', '35', '36', '37', '38', '40'] for c in enter_tags):
             sell, signal_name = self.sell_quick_mode(current_profit, max_profit, last_candle, previous_candle_1, trade, current_time)
             if sell and (signal_name is not None):
-                return signal_name + ' ( ' + buy_tag + ')'
+                return signal_name + ' ( ' + enter_tag + ')'
 
         # Ichi Trade management
-        if all(c in ['39'] for c in buy_tags):
+        if all(c in ['39'] for c in enter_tags):
             sell, signal_name = self.sell_ichi(current_profit, max_profit, max_loss, last_candle, previous_candle_1, trade, current_time)
             if sell and (signal_name is not None):
-                return signal_name + ' ( ' + buy_tag + ')'
+                return signal_name + ' ( ' + enter_tag + ')'
 
         # Over EMA200, main profit targets
         sell, signal_name = self.sell_over_main(current_profit, last_candle)
         if sell and (signal_name is not None):
-            return signal_name + ' ( ' + buy_tag + ')'
+            return signal_name + ' ( ' + enter_tag + ')'
 
         # Under EMA200, main profit targets
         sell, signal_name = self.sell_under_main(current_profit, last_candle)
         if sell and (signal_name is not None):
-            return signal_name + ' ( ' + buy_tag + ')'
+            return signal_name + ' ( ' + enter_tag + ')'
 
         # The pair is pumped
         sell, signal_name = self.sell_pump_main(current_profit, last_candle)
         if sell and (signal_name is not None):
-            return signal_name + ' ( ' + buy_tag + ')'
+            return signal_name + ' ( ' + enter_tag + ')'
 
         # The pair is descending
         sell, signal_name = self.sell_dec_main(current_profit, last_candle)
         if sell and (signal_name is not None):
-            return signal_name + ' ( ' + buy_tag + ')'
+            return signal_name + ' ( ' + enter_tag + ')'
 
         # Trailing
         sell, signal_name = self.sell_trail_main(current_profit, last_candle, max_profit)
         if sell and (signal_name is not None):
-            return signal_name + ' ( ' + buy_tag + ')'
+            return signal_name + ' ( ' + enter_tag + ')'
 
         # Duration based
         sell, signal_name = self.sell_duration_main(current_profit, last_candle, trade, current_time)
         if sell and (signal_name is not None):
-            return signal_name + ' ( ' + buy_tag + ')'
+            return signal_name + ' ( ' + enter_tag + ')'
 
         # Under EMA200, exit with any profit
         sell, signal_name = self.sell_under_min(current_profit, last_candle)
         if sell and (signal_name is not None):
-            return signal_name + ' ( ' + buy_tag + ')'
+            return signal_name + ' ( ' + enter_tag + ')'
 
         # Stoplosses
         sell, signal_name = self.sell_stoploss(current_profit, last_candle, previous_candle_1)
         if sell and (signal_name is not None):
-            return signal_name + ' ( ' + buy_tag + ')'
+            return signal_name + ' ( ' + enter_tag + ')'
 
         # Pumped descending pairs
         sell, signal_name = self.sell_pump_dec(current_profit, last_candle)
         if sell and (signal_name is not None):
-            return signal_name + ' ( ' + buy_tag + ')'
+            return signal_name + ' ( ' + enter_tag + ')'
 
         # Extra sells for pumped pairs
         sell, signal_name = self.sell_pump_extra(current_profit, last_candle, max_profit)
         if sell and (signal_name is not None):
-            return signal_name + ' ( ' + buy_tag + ')'
+            return signal_name + ' ( ' + enter_tag + ')'
 
         # Extra sells for trades that recovered
         sell, signal_name = self.sell_recover(current_profit, last_candle, max_loss)
         if sell and (signal_name is not None):
-            return signal_name + ' ( ' + buy_tag + ')'
+            return signal_name + ' ( ' + enter_tag + ')'
 
         # Williams %R based sell 1
         sell, signal_name = self.sell_r_1(current_profit, last_candle)
         if sell and (signal_name is not None):
-            return signal_name + ' ( ' + buy_tag + ')'
+            return signal_name + ' ( ' + enter_tag + ')'
 
         # Williams %R based sell 2
         sell, signal_name = self.sell_r_2(current_profit, last_candle)
         if sell and (signal_name is not None):
-            return signal_name + ' ( ' + buy_tag + ')'
+            return signal_name + ' ( ' + enter_tag + ')'
 
         # Williams %R based sell 3
         sell, signal_name = self.sell_r_3(current_profit, last_candle)
         if sell and (signal_name is not None):
-            return signal_name + ' ( ' + buy_tag + ')'
+            return signal_name + ' ( ' + enter_tag + ')'
 
         # Williams %R based sell 4, plus CTI
         sell, signal_name = self.sell_r_4(current_profit, last_candle)
         if (sell) and (signal_name is not None):
-            return signal_name + ' ( ' + buy_tag + ')'
+            return signal_name + ' ( ' + enter_tag + ')'
 
         # Sell signal 1
         if self.sell_condition_1_enable.value and (last_candle['rsi_14'] > self.sell_rsi_bb_1.value) and (last_candle['close'] > last_candle['bb20_2_upp']) and (previous_candle_1['close'] > previous_candle_1['bb20_2_upp']) and (previous_candle_2['close'] > previous_candle_2['bb20_2_upp']) and (previous_candle_3['close'] > previous_candle_3['bb20_2_upp']) and (previous_candle_4['close'] > previous_candle_4['bb20_2_upp']) and (previous_candle_5['close'] > previous_candle_5['bb20_2_upp']):
             if (last_candle['close'] > last_candle['ema_200']):
                 if (current_profit > 0.0):
-                    return 'sell_signal_1_1_1' + ' ( ' + buy_tag + ')'
+                    return 'exit_signal_1_1_1' + ' ( ' + enter_tag + ')'
             else:
                 if (current_profit > 0.0):
-                    return 'sell_signal_1_2_1' + ' ( ' + buy_tag + ')'
+                    return 'exit_signal_1_2_1' + ' ( ' + enter_tag + ')'
                 elif (max_loss > 0.25):
-                    return 'sell_signal_1_2_2' + ' ( ' + buy_tag + ')'
+                    return 'exit_signal_1_2_2' + ' ( ' + enter_tag + ')'
 
         # Sell signal 2
         elif (self.sell_condition_2_enable.value) and (last_candle['rsi_14'] > self.sell_rsi_bb_2.value) and (last_candle['close'] > last_candle['bb20_2_upp']) and (previous_candle_1['close'] > previous_candle_1['bb20_2_upp']) and (previous_candle_2['close'] > previous_candle_2['bb20_2_upp']):
             if (last_candle['close'] > last_candle['ema_200']):
                 if (current_profit > 0.0):
-                    return 'sell_signal_2_1_1' + ' ( ' + buy_tag + ')'
+                    return 'exit_signal_2_1_1' + ' ( ' + enter_tag + ')'
             else:
                 if (current_profit > 0.0):
-                    return 'sell_signal_2_2_1' + ' ( ' + buy_tag + ')'
+                    return 'exit_signal_2_2_1' + ' ( ' + enter_tag + ')'
                 elif (max_loss > 0.25):
-                    return 'sell_signal_2_2_2' + ' ( ' + buy_tag + ')'
+                    return 'exit_signal_2_2_2' + ' ( ' + enter_tag + ')'
 
         # Sell signal 4
         elif self.sell_condition_4_enable.value and (last_candle['rsi_14'] > self.sell_dual_rsi_rsi_4.value) and (last_candle['rsi_14_1h'] > self.sell_dual_rsi_rsi_1h_4.value):
             if (last_candle['close'] > last_candle['ema_200']):
                 if (current_profit > 0.0):
-                    return 'sell_signal_4_1_1' + ' ( ' + buy_tag + ')'
+                    return 'exit_signal_4_1_1' + ' ( ' + enter_tag + ')'
             else:
                 if (current_profit > 0.0):
-                    return 'sell_signal_4_2_1' + ' ( ' + buy_tag + ')'
+                    return 'exit_signal_4_2_1' + ' ( ' + enter_tag + ')'
                 elif (max_loss > 0.25):
-                    return 'sell_signal_4_2_2' + ' ( ' + buy_tag + ')'
+                    return 'exit_signal_4_2_2' + ' ( ' + enter_tag + ')'
 
         # Sell signal 6
         elif self.sell_condition_6_enable.value and (last_candle['close'] < last_candle['ema_200']) and (last_candle['close'] > last_candle['ema_50']) and (last_candle['rsi_14'] > self.sell_rsi_under_6.value):
             if (current_profit > 0.0):
-                    return 'sell_signal_6_1' + ' ( ' + buy_tag + ')'
+                    return 'exit_signal_6_1' + ' ( ' + enter_tag + ')'
             elif (max_loss > 0.25):
-                return 'sell_signal_6_2' + ' ( ' + buy_tag + ')'
+                return 'exit_signal_6_2' + ' ( ' + enter_tag + ')'
 
         # Sell signal 7
         elif self.sell_condition_7_enable.value and (last_candle['rsi_14_1h'] > self.sell_rsi_1h_7.value) and (last_candle['crossed_below_ema_12_26']):
             if (last_candle['close'] > last_candle['ema_200']):
                 if (current_profit > 0.0):
-                    return 'sell_signal_7_1_1' + ' ( ' + buy_tag + ')'
+                    return 'exit_signal_7_1_1' + ' ( ' + enter_tag + ')'
             else:
                 if (current_profit > 0.0):
-                    return 'sell_signal_7_2_1' + ' ( ' + buy_tag + ')'
+                    return 'exit_signal_7_2_1' + ' ( ' + enter_tag + ')'
                 elif (max_loss > 0.25):
-                    return 'sell_signal_7_2_2' + ' ( ' + buy_tag + ')'
+                    return 'exit_signal_7_2_2' + ' ( ' + enter_tag + ')'
 
         # Sell signal 8
         elif self.sell_condition_8_enable.value and (last_candle['close'] > last_candle['bb20_2_upp_1h'] * self.sell_bb_relative_8.value):
             if (last_candle['close'] > last_candle['ema_200']):
                 if (current_profit > 0.0):
-                    return 'sell_signal_8_1_1' + ' ( ' + buy_tag + ')'
+                    return 'exit_signal_8_1_1' + ' ( ' + enter_tag + ')'
             else:
                 if (current_profit > 0.0):
-                    return 'sell_signal_8_2_1' + ' ( ' + buy_tag + ')'
+                    return 'exit_signal_8_2_1' + ' ( ' + enter_tag + ')'
                 elif (max_loss > 0.25):
-                    return 'sell_signal_8_2_2' + ' ( ' + buy_tag + ')'
+                    return 'exit_signal_8_2_2' + ' ( ' + enter_tag + ')'
 
         return None
 
@@ -3002,9 +3002,9 @@ class NostalgiaForInfinityNext_ChangeToTower_V6(IStrategy):
         dataframe = self.normal_tf_indicators(dataframe, metadata)
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         conditions = []
-        dataframe.loc[:, 'buy_tag'] = ''
+        dataframe.loc[:, 'enter_tag'] = ''
 
         for index in self.buy_protection_params:
             item_buy_protection_list = [True]
@@ -3509,7 +3509,7 @@ class NostalgiaForInfinityNext_ChangeToTower_V6(IStrategy):
 
                 item_buy_logic.append(dataframe['volume'] > 0)
                 item_buy = reduce(lambda x, y: x & y, item_buy_logic)
-                dataframe.loc[item_buy, 'buy_tag'] += str(index) + ' '
+                dataframe.loc[item_buy, 'enter_tag'] += str(index) + ' '
                 conditions.append(item_buy)
 
         if conditions:
@@ -3517,7 +3517,7 @@ class NostalgiaForInfinityNext_ChangeToTower_V6(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[:, 'sell'] = 0
 
         return dataframe
@@ -3541,7 +3541,7 @@ class NostalgiaForInfinityNext_ChangeToTower_V6(IStrategy):
         :param time_in_force: Time in force. Defaults to GTC (Good-til-cancelled).
         :param sell_reason: Sell reason.
             Can be any of ['roi', 'stop_loss', 'stoploss_on_exchange', 'trailing_stop_loss',
-                           'sell_signal', 'force_sell', 'emergency_sell']
+                           'exit_signal', 'force_exit', 'emergency_sell']
         :param **kwargs: Ensure to keep this here so updates to this won't break your strategy.
         :return bool: When True is returned, then the sell-order is placed on the exchange.
             False aborts the process
@@ -3560,7 +3560,7 @@ class NostalgiaForInfinityNext_ChangeToTower_V6(IStrategy):
 
             trade_profit_ratio = self.hold_trade_ids[trade.id]
             current_profit_ratio = trade.calc_profit_ratio(rate)
-            if sell_reason == "force_sell":
+            if sell_reason == "force_exit":
                 formatted_profit_ratio = "{}%".format(trade_profit_ratio * 100)
                 formatted_current_profit_ratio = "{}%".format(current_profit_ratio * 100)
                 log.warning(

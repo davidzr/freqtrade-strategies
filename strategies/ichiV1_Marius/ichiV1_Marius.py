@@ -279,9 +279,9 @@ class ichiV1_Marius(IStrategy):
         560 // timeframe_minutes,
     ]
 
-    use_sell_signal = False
-    sell_profit_only = False
-    ignore_roi_if_buy_signal = True
+    use_exit_signal = False
+    exit_profit_only = False
+    ignore_roi_if_entry_signal = True
 
     # trailing stoploss hyperopt parameters
     pHSL = DecimalParameter(-0.15, -0.08, default=sell_params['pHSL'], decimals=3, space='sell', optimize=True)
@@ -318,7 +318,7 @@ class ichiV1_Marius(IStrategy):
         'max_slippage': -0.02
     }
 
-    def custom_sell(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float, current_profit: float, **kwargs):
+    def custom_exit(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float, current_profit: float, **kwargs):
         if ((current_time - trade.open_date_utc).seconds / 60 > 1440):
             return 'unclog'
 
@@ -342,20 +342,20 @@ class ichiV1_Marius(IStrategy):
         last_candle = dataframe.iloc[-1]
         current_profit = trade.calc_profit_ratio(rate)
 
-        if 'tesla_' in trade.buy_tag and current_profit > 0.01:
+        if 'tesla_' in trade.enter_tag and current_profit > 0.01:
             return True
 
-        if (trade.buy_tag == 'telsa_'):
-            if (sell_reason in ['sell_signal'])or (sell_reason in ['roi']) or (sell_reason in ['trailing_stop_loss']):
+        if (trade.enter_tag == 'telsa_'):
+            if (sell_reason in ['exit_signal'])or (sell_reason in ['roi']) or (sell_reason in ['trailing_stop_loss']):
                         return False 
 
         if (last_candle is not None):
-            if (sell_reason in ['sell_signal']):
+            if (sell_reason in ['exit_signal']):
                 if (last_candle['hma_50'] > last_candle['ema_100']) and (last_candle['rsi'] < 45): #*1.2
                     return False
 
         if (last_candle is not None):
-            if (sell_reason in ['sell_signal']):
+            if (sell_reason in ['exit_signal']):
                 if (last_candle['hma_50']*1.149 > last_candle['ema_100']) and (last_candle['close'] < last_candle['ema_100']*0.951): #*1.2
                     return False
 
@@ -590,10 +590,10 @@ class ichiV1_Marius(IStrategy):
 
         return True
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         
         conditions = []
-        dataframe.loc[:, 'buy_tag'] = ''
+        dataframe.loc[:, 'enter_tag'] = ''
 
         is_protection = (
             (pct_change(dataframe['btc_1d'], dataframe['btc_5m']).fillna(0) > self.buy_btc_safe_1d.value) &
@@ -617,7 +617,7 @@ class ichiV1_Marius(IStrategy):
                 (dataframe['fan_magnitude'] > 0.99)
             )
             conditions.append(tesla) 
-            dataframe.loc[tesla, 'buy_tag'] += 'tesla_' 
+            dataframe.loc[tesla, 'enter_tag'] += 'tesla_' 
 
         if conditions:
             dataframe.loc[
@@ -628,7 +628,7 @@ class ichiV1_Marius(IStrategy):
         return dataframe
 
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 
         conditions = []
 

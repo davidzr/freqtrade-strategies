@@ -633,10 +633,10 @@ class CryptoFrogNFIHO1A(IStrategy):
     process_only_new_candles = False
 
     # Experimental settings (configuration will overide these if set)
-    use_sell_signal = True
-    sell_profit_only = False
-    sell_profit_offset = 0.01
-    ignore_roi_if_buy_signal = False
+    use_exit_signal = True
+    exit_profit_only = False
+    exit_profit_offset = 0.01
+    ignore_roi_if_entry_signal = False
 
     use_dynamic_roi = True    
     
@@ -1543,7 +1543,7 @@ class CryptoFrogNFIHO1A(IStrategy):
 
     #############################################################
 
-    def custom_sell(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float,
+    def custom_exit(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float,
                     current_profit: float, **kwargs):
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
         last_candle = dataframe.iloc[-1].squeeze()
@@ -2029,7 +2029,7 @@ class CryptoFrogNFIHO1A(IStrategy):
         return dataframe
 
     ## cryptofrog signals
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                 (
@@ -2908,7 +2908,7 @@ class CryptoFrogNFIHO1A(IStrategy):
         return dataframe
     
     ## more going on here
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         conditions = []
 
         conditions.append(
@@ -3126,10 +3126,10 @@ class CryptoFrogNFIHO1A(IStrategy):
             if rate:
                 return rate
 
-        ask_strategy = self.config.get('ask_strategy', {})
-        if ask_strategy.get('use_order_book', False):
+        exit_pricing = self.config.get('exit_pricing', {})
+        if exit_pricing.get('use_order_book', False):
             ob = self.dp.orderbook(pair, 1)
-            rate = ob[f"{ask_strategy['price_side']}s"][0][0]
+            rate = ob[f"{exit_pricing['price_side']}s"][0][0]
         else:
             ticker = self.dp.ticker(pair)
             rate = ticker['last']

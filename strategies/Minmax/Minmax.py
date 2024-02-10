@@ -31,7 +31,7 @@ class Minmax(IStrategy):
         frame_size = 500
         len_df = len(dataframe)
         dataframe['buy_signal'] = False
-        dataframe['sell_signal'] = False
+        dataframe['exit_signal'] = False
         lookback_size = 100
         # Let's calculate argrelextrema on separated data slices and get only last result to avoid lookahead bias!
         for i in range(len_df):
@@ -48,7 +48,7 @@ class Minmax(IStrategy):
                 if len(max_peaks[0]) and max_peaks[0][-1] == frame_size - 2:
                     # oh it seams that penultimate candle is max
                     # lets sell ASAP
-                    dataframe.at[i + frame_size, 'sell_signal'] = True
+                    dataframe.at[i + frame_size, 'exit_signal'] = True
 
                 if i + frame_size == len_df - 1:
                     print(min_peaks)
@@ -74,13 +74,13 @@ class Minmax(IStrategy):
         #     dataframe.at[mp, 'buy_signal'] = True
         #
         # for mp in max_peaks[0]:
-        #     dataframe.at[mp, 'sell_signal'] = True
+        #     dataframe.at[mp, 'exit_signal'] = True
 
         # Uhhh that's better! Ordering Lambo now!
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         print(dataframe.tail(30))
 
 
@@ -92,12 +92,12 @@ class Minmax(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 
 
         dataframe.loc[
             (
-                dataframe['sell_signal']
+                dataframe['exit_signal']
             ),
             'sell'] = 1
         return dataframe

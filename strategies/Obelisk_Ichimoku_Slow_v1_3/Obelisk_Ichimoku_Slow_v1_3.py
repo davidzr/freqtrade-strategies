@@ -228,7 +228,7 @@ class Obelisk_Ichimoku_Slow_v1_3(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (dataframe['trending'] > 0)
             & (dataframe['entry_ok'] > 0)
@@ -236,7 +236,7 @@ class Obelisk_Ichimoku_Slow_v1_3(IStrategy):
         , 'buy'] = 1
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (dataframe['trending'] == 0)
             & (dataframe['date'].dt.minute == 0) # when backtesting at 5m/1m only set signal on the hour

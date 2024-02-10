@@ -39,10 +39,10 @@ class Hacklemore2(IStrategy):
     
     timeframe = '15m'
 
-    use_sell_signal = True
-    sell_profit_only = False
-    #sell_profit_offset = 0.01
-    ignore_roi_if_buy_signal = True
+    use_exit_signal = True
+    exit_profit_only = False
+    #exit_profit_offset = 0.01
+    ignore_roi_if_entry_signal = True
     
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe['volume_mean_slow'] = dataframe['volume'].rolling(window=24).mean()
@@ -64,7 +64,7 @@ class Hacklemore2(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         active_trade = False
 
         if self.config['runmode'].value in ('live', 'dry_run'):
@@ -97,7 +97,7 @@ class Hacklemore2(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         active_trade = False
 
         if self.config['runmode'].value in ('live', 'dry_run'):

@@ -19,8 +19,8 @@ class Babico_SMA5xBBmid(IStrategy):
     trailing_stop_positive = 0.01
     trailing_stop_positive_offset = 0.03
 
-    use_sell_signal = True
-    sell_profit_only = True
+    use_exit_signal = True
+    exit_profit_only = True
     process_only_new_candles = True
 
     # Optional order type mapping.
@@ -46,7 +46,7 @@ class Babico_SMA5xBBmid(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                 qtpylib.crossed_above(dataframe['ema5'], dataframe['bb_mid']) 
@@ -54,7 +54,7 @@ class Babico_SMA5xBBmid(IStrategy):
             'buy'] = 1
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                 qtpylib.crossed_above(dataframe['bb_mid'], dataframe['ema5']) 

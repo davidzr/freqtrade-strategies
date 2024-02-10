@@ -139,9 +139,9 @@ class MiniLambo(IStrategy):
 
     timeframe = '1m'
 
-    use_sell_signal = False
-    sell_profit_only = False
-    ignore_roi_if_buy_signal = False
+    use_exit_signal = False
+    exit_profit_only = False
+    ignore_roi_if_entry_signal = False
     use_custom_stoploss = True
     process_only_new_candles = True
     startup_candle_count = 200
@@ -154,7 +154,7 @@ class MiniLambo(IStrategy):
             },
             "buy_sell": {
                 "sell_tag": {"color": "red"},
-                "buy_tag": {"color": "blue"},
+                "enter_tag": {"color": "blue"},
             },
         },
         "subplots": {
@@ -251,9 +251,9 @@ class MiniLambo(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         conditions = []
-        dataframe.loc[:, 'buy_tag'] = ''
+        dataframe.loc[:, 'enter_tag'] = ''
 
         lambo2 = (
                 (dataframe['close'] < (dataframe['ema_14'] * self.lambo2_ema_14_factor.value))
@@ -263,19 +263,19 @@ class MiniLambo(IStrategy):
                 & (dataframe['close'].pct_change(periods=self.lambo2_pct_change_low_period.value) < float(self.lambo2_pct_change_low_ratio.value))
                 & (dataframe['close'].pct_change(periods=self.lambo2_pct_change_high_period.value) > float(self.lambo2_pct_change_high_ratio.value))
         )
-        dataframe.loc[lambo2, 'buy_tag'] += 'lambo2 '
+        dataframe.loc[lambo2, 'enter_tag'] += 'lambo2 '
         conditions.append(lambo2)
 
         dataframe.loc[reduce(lambda x, y: x | y, conditions), 'buy'] = 1
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         return dataframe
 
     def confirm_trade_exit(self, pair: str, trade: Trade, order_type: str, amount: float,
                            rate: float, time_in_force: str, sell_reason: str,
                            current_time: datetime, **kwargs) -> bool:
-        trade.sell_reason = f'{sell_reason} ({trade.buy_tag})'
+        trade.sell_reason = f'{sell_reason} ({trade.enter_tag})'
         return True
 
 
@@ -325,7 +325,7 @@ class MiniLambo_TBS(MiniLambo):
         'trailing_buy_order_started': False,
         'trailing_buy_order_uplimit': 0,
         'start_trailing_price': 0,
-        'buy_tag': None,
+        'enter_tag': None,
         'start_trailing_time': None,
         'offset': 0,
         'allow_trailing': False,
@@ -444,7 +444,7 @@ class MiniLambo_TBS(MiniLambo):
                             trailing_buy['trailing_buy_order_started'] = True
                             trailing_buy['trailing_buy_order_uplimit'] = last_candle['close']
                             trailing_buy['start_trailing_price'] = last_candle['close']
-                            trailing_buy['buy_tag'] = last_candle['buy_tag']
+                            trailing_buy['enter_tag'] = last_candle['enter_tag']
                             trailing_buy['start_trailing_time'] = datetime.now(timezone.utc)
                             trailing_buy['offset'] = 0
 
@@ -506,8 +506,8 @@ class MiniLambo_TBS(MiniLambo):
 
         return val
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        dataframe = super().populate_buy_trend(dataframe, metadata)
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+        dataframe = super().populate_entry_trend(dataframe, metadata)
 
         if self.trailing_buy_order_enabled and self.config['runmode'].value in ('live', 'dry_run'):
             last_candle = dataframe.iloc[-1].squeeze()
@@ -519,13 +519,13 @@ class MiniLambo_TBS(MiniLambo):
                         logger.info(f"Set 'allow_trailing' to True for {metadata['pair']} to start trailing!!!")
                         # self.custom_info_trail_buy[metadata['pair']]['trailing_buy']['allow_trailing'] = True
                         trailing_buy['allow_trailing'] = True
-                        initial_buy_tag = last_candle['buy_tag'] if 'buy_tag' in last_candle else 'buy signal'
-                        dataframe.loc[:, 'buy_tag'] = f"{initial_buy_tag} (start trail price {last_candle['close']})"
+                        initial_enter_tag = last_candle['enter_tag'] if 'enter_tag' in last_candle else 'buy signal'
+                        dataframe.loc[:, 'enter_tag'] = f"{initial_enter_tag} (start trail price {last_candle['close']})"
             else:
                 if (trailing_buy['trailing_buy_order_started'] == True):
                     logger.info(f"Continue trailing for {metadata['pair']}. Manually trigger buy signal!!")
                     dataframe.loc[:, 'buy'] = 1
-                    dataframe.loc[:, 'buy_tag'] = trailing_buy['buy_tag']
+                    dataframe.loc[:, 'enter_tag'] = trailing_buy['enter_tag']
                     # dataframe['buy'] = 1
 
         return dataframe

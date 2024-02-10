@@ -79,10 +79,10 @@ class NotAnotherSMAOffsetStrategy_uzi(IStrategy):
     trailing_only_offset_is_reached = True
 
     # Sell signal
-    use_sell_signal = True
-    sell_profit_only = False
-    sell_profit_offset = 0.005
-    ignore_roi_if_buy_signal = False
+    use_exit_signal = True
+    exit_profit_only = False
+    exit_profit_offset = 0.005
+    ignore_roi_if_entry_signal = False
 
     # Optimal timeframe for the strategy
     timeframe = '5m'
@@ -101,7 +101,7 @@ class NotAnotherSMAOffsetStrategy_uzi(IStrategy):
 
 
         if (last_candle is not None):
-            if (sell_reason in ['sell_signal']):
+            if (sell_reason in ['exit_signal']):
                 if (last_candle['hma_50']*1.149 > last_candle['ema_100']) and (last_candle['close'] < last_candle['ema_100']*0.951): #*1.2
                     return False
         return True
@@ -131,7 +131,7 @@ class NotAnotherSMAOffsetStrategy_uzi(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         conditions = []
         
         conditions.append(
@@ -162,7 +162,7 @@ class NotAnotherSMAOffsetStrategy_uzi(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         conditions = []
 
         conditions.append(

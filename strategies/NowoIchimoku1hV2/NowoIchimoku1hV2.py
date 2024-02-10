@@ -65,7 +65,7 @@ class NowoIchimoku1hV2(IStrategy):
 
     startup_candle_count = 100
 
-    use_sell_signal = False
+    use_exit_signal = False
 
     use_custom_stoploss = True
 
@@ -194,7 +194,7 @@ class NowoIchimoku1hV2(IStrategy):
 
         return df
 
-    def populate_buy_trend(self, df: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, df: DataFrame, metadata: dict) -> DataFrame:
         df['is_cloud_green'] = df['lead_1'] > df['lead_2']
 
         double_shifted_upper_cloud = df['upper_cloud'].shift(50)
@@ -230,6 +230,6 @@ class NowoIchimoku1hV2(IStrategy):
 
         return df
 
-    def populate_sell_trend(self, df: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, df: DataFrame, metadata: dict) -> DataFrame:
         df['sell'] = 0
         return df

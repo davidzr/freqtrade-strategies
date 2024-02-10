@@ -169,7 +169,7 @@ class Dracula(IStrategy):
         return dataframe
 
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         prev = dataframe.shift(1)
         prev1 = dataframe.shift(2)
         lost_protect = (dataframe['ema'] > (dataframe['close'] * 1.07)).rolling(10).sum() == 0
@@ -186,7 +186,7 @@ class Dracula(IStrategy):
         item_buy_logic.append(lost_protect)
         dataframe.loc[
             reduce(lambda x, y: x & y, item_buy_logic),
-            ['buy', 'buy_tag']] = (1, f'buy_1')
+            ['enter_long', 'enter_tag']] = (1, f'buy_1')
 
         item_buy_logic = []
         item_buy_logic.append(dataframe['volume'] > 0)
@@ -199,11 +199,11 @@ class Dracula(IStrategy):
         item_buy_logic.append(lost_protect)
         dataframe.loc[
             reduce(lambda x, y: x & y, item_buy_logic),
-            ['buy', 'buy_tag']] = (1, f'buy_2')
+            ['enter_long', 'enter_tag']] = (1, f'buy_2')
 
         return dataframe
 
-    def custom_sell(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
+    def custom_exit(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
                     current_profit: float, **kwargs):
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
         last_candle = dataframe.iloc[-1].squeeze()
@@ -214,25 +214,25 @@ class Dracula(IStrategy):
                 and prev_candle['close'] > prev_candle['open'] \
                 and prev_candle['close'] < prev1_candle['resistance'] \
                 and last_candle['volume'] > 0:
-            return 'sell_signal_1_'+trade.buy_tag
+            return 'exit_signal_1_'+trade.enter_tag
         elif last_candle['bb_bbh_i'] == 1 \
                 and last_candle['close'] < last_candle['open'] \
                 and last_candle['open'] < prev1_candle['resistance'] \
                 and last_candle['volume'] > 0:
-            return 'sell_signal_2_'+trade.buy_tag
+            return 'exit_signal_2_'+trade.enter_tag
         elif last_candle['close'] < last_candle['open'] \
             and last_candle['ema'] > (last_candle['close'] * 1.07) \
                 and last_candle['volume'] > 0:
-            return 'stop_loss_'+trade.buy_tag
+            return 'stop_loss_'+trade.enter_tag
         elif (last_candle['close'] < last_candle['open']) and (last_candle['close'] <= (last_candle['bb_bbl'] * 1.002)) and current_profit >= 0:
-            return 'take_profit_'+trade.buy_tag
-        elif 'sma' in trade.buy_tag and current_profit >= 0.01:
+            return 'take_profit_'+trade.enter_tag
+        elif 'sma' in trade.enter_tag and current_profit >= 0.01:
             return 'sma'
-        elif 'sma' in trade.buy_tag  and (last_candle['close'] > (last_candle['ema_49'] * self.high_offset.value)):
+        elif 'sma' in trade.enter_tag  and (last_candle['close'] > (last_candle['ema_49'] * self.high_offset.value)):
             return 'stop_loss_sma'
         return None
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[:, 'sell'] = 0
 
         return dataframe

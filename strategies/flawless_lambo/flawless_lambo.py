@@ -805,11 +805,11 @@ class flawless_lambo(IStrategy):
     # Optimal timeframe for the strategy.
     timeframe = '15m'
 
-    # These values can be overridden in the "ask_strategy" section in the config.
-    use_sell_signal = True
-    sell_profit_only = False
-    # sell_profit_offset = 0.019
-    ignore_roi_if_buy_signal = False
+    # These values can be overridden in the "exit_pricing" section in the config.
+    use_exit_signal = True
+    exit_profit_only = False
+    # exit_profit_offset = 0.019
+    ignore_roi_if_entry_signal = False
 
 
     # hyperopt params
@@ -829,7 +829,7 @@ class flawless_lambo(IStrategy):
     debug_mode = True
     trailing_sell_max_stop = 0.01   # stop trailing sell if current_price < starting_price * (1+trailing_buy_max_stop)
     trailing_sell_max_sell = 0.000  # sell if price between downlimit (=max of serie (current_price * (1 + trailing_sell_offset())) and (start_price * 1+trailing_sell_max_sell))
-    abort_trailing_when_sell_signal_triggered = False
+    abort_trailing_when_exit_signal_triggered = False
 
     
     init_trailing_sell_dict = {
@@ -1250,12 +1250,12 @@ class flawless_lambo(IStrategy):
                     self.trailing_sell(pair, reinit=True)
                     self.logger.info(f'STOP trailing sell for {pair} because I SOLD it')
 
-        if sell_reason != 'sell_signal':
+        if sell_reason != 'exit_signal':
             val = True
 
         return val
         
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
             (dataframe['volume'] > 0) &
@@ -1267,7 +1267,7 @@ class flawless_lambo(IStrategy):
         
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 
         dataframe.loc[
             (

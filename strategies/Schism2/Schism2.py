@@ -20,7 +20,7 @@ This strategy is an evolution of our previous framework "Schism" which we are ha
 
 FEATURES:
     - Sticking buy signal for extending ROI
-        - Idea is to use a completely different buy signal for active trades to force the "ignore_roi_if_buy_signal = True" setting to stop a sell to ROI
+        - Idea is to use a completely different buy signal for active trades to force the "ignore_roi_if_entry_signal = True" setting to stop a sell to ROI
           during a strong upward trend.
             - This is not compatible with backtest or hyperopt and can only be tested in dry-run or live.
     - Dynamic Sell
@@ -75,9 +75,9 @@ class Schism2(IStrategy):
     stoploss = -0.30
 
     # Recommended
-    use_sell_signal = True
-    sell_profit_only = False
-    ignore_roi_if_buy_signal = True
+    use_exit_signal = True
+    exit_profit_only = False
+    ignore_roi_if_entry_signal = True
 
     startup_candle_count: int = 72
 
@@ -163,12 +163,12 @@ class Schism2(IStrategy):
     """
     Buy Trigger Signals
     """
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         params = self.get_pair_params(metadata['pair'], 'buy')
         trade_data = self.custom_trade_info[metadata['pair']]
         conditions = []
 
-        # Persist a buy signal for existing trades to make use of ignore_roi_if_buy_signal = True
+        # Persist a buy signal for existing trades to make use of ignore_roi_if_entry_signal = True
         # when this buy signal is not present a sell can happen according to the defined ROI table
         if trade_data['active_trade']:
             # peak_profit factor f(x)=1-x/400, rmi 30 -> 0.925, rmi 80 -> 0.80
@@ -216,7 +216,7 @@ class Schism2(IStrategy):
     """
     Sell Trigger Signals
     """
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         params = self.get_pair_params(metadata['pair'], 'sell')
         trade_data = self.custom_trade_info[metadata['pair']]
         conditions = []
@@ -340,10 +340,10 @@ class Schism2(IStrategy):
             if rate:
                 return rate
 
-        ask_strategy = self.config.get('ask_strategy', {})
-        if ask_strategy.get('use_order_book', False):
+        exit_pricing = self.config.get('exit_pricing', {})
+        if exit_pricing.get('use_order_book', False):
             ob = self.dp.orderbook(pair, 1)
-            rate = ob[f"{ask_strategy['price_side']}s"][0][0]
+            rate = ob[f"{exit_pricing['price_side']}s"][0][0]
         else:
             ticker = self.dp.ticker(pair)
             rate = ticker['last']
@@ -387,27 +387,27 @@ class Schism2(IStrategy):
     https://www.freqtrade.io/en/latest/strategy-advanced/
     """
     def check_buy_timeout(self, pair: str, trade: Trade, order: dict, **kwargs) -> bool:
-        bid_strategy = self.config.get('bid_strategy', {})
+        entry_pricing = self.config.get('entry_pricing', {})
         ob = self.dp.orderbook(pair, 1)
-        current_price = ob[f"{bid_strategy['price_side']}s"][0][0]
+        current_price = ob[f"{entry_pricing['price_side']}s"][0][0]
         # Cancel buy order if price is more than 1% above the order.
         if current_price > order['price'] * 1.01:
             return True
         return False
 
     def check_sell_timeout(self, pair: str, trade: Trade, order: dict, **kwargs) -> bool:
-        ask_strategy = self.config.get('ask_strategy', {})
+        exit_pricing = self.config.get('exit_pricing', {})
         ob = self.dp.orderbook(pair, 1)
-        current_price = ob[f"{ask_strategy['price_side']}s"][0][0]
+        current_price = ob[f"{exit_pricing['price_side']}s"][0][0]
         # Cancel sell order if price is more than 1% below the order.
         if current_price < order['price'] * 0.99:
             return True
         return False
 
     def confirm_trade_entry(self, pair: str, order_type: str, amount: float, rate: float, time_in_force: str, **kwargs) -> bool:
-        bid_strategy = self.config.get('bid_strategy', {})
+        entry_pricing = self.config.get('entry_pricing', {})
         ob = self.dp.orderbook(pair, 1)
-        current_price = ob[f"{bid_strategy['price_side']}s"][0][0]
+        current_price = ob[f"{entry_pricing['price_side']}s"][0][0]
         # Cancel buy order if price is more than 1% above the order.
         if current_price > rate * 1.01:
             return False
@@ -464,7 +464,7 @@ class Schism2_BTC(Schism2):
         'xtf-stake-rsi': 53
     }
 
-    use_sell_signal = False
+    use_exit_signal = False
 
 # Sub-strategy with parameters specific to ETH stake
 class Schism2_ETH(Schism2):
@@ -483,4 +483,4 @@ class Schism2_ETH(Schism2):
         'xtf-stake-rsi': 92
     }
 
-    use_sell_signal = False
+    use_exit_signal = False

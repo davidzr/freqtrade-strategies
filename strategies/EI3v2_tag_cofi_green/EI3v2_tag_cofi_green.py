@@ -150,10 +150,10 @@ class EI3v2_tag_cofi_green(IStrategy):
     
 
     # Sell signal
-    use_sell_signal = True
-    sell_profit_only = True
-    sell_profit_offset = 0.01
-    ignore_roi_if_buy_signal = False
+    use_exit_signal = True
+    exit_profit_only = True
+    exit_profit_offset = 0.01
+    ignore_roi_if_entry_signal = False
 
     ## Optional order time in force.
     order_time_in_force = {
@@ -176,7 +176,7 @@ class EI3v2_tag_cofi_green(IStrategy):
     }
 
 
-    def custom_sell(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float, current_profit: float, **kwargs):
+    def custom_exit(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float, current_profit: float, **kwargs):
         # Sell any positions at a loss if they are held for more than 7 days.
         if current_profit < -0.04 and (current_time - trade.open_date_utc).days >= 4:
             return 'unclog'
@@ -303,9 +303,9 @@ class EI3v2_tag_cofi_green(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         conditions = []
-        dataframe.loc[:, 'buy_tag'] = ''
+        dataframe.loc[:, 'enter_tag'] = ''
 
         lambo2 = (
             #bool(self.lambo2_enabled.value) &
@@ -314,7 +314,7 @@ class EI3v2_tag_cofi_green(IStrategy):
             (dataframe['rsi_4'] < int(self.lambo2_rsi_4_limit.value)) &
             (dataframe['rsi_14'] < int(self.lambo2_rsi_14_limit.value))
         )
-        dataframe.loc[lambo2, 'buy_tag'] += 'lambo2_'
+        dataframe.loc[lambo2, 'enter_tag'] += 'lambo2_'
         conditions.append(lambo2)
 
         buy1ewo = (
@@ -325,7 +325,7 @@ class EI3v2_tag_cofi_green(IStrategy):
                 (dataframe['volume'] > 0)&
                 (dataframe['close'] < (dataframe[f'ma_sell_{self.base_nb_candles_sell.value}'] * self.high_offset.value))
         )
-        dataframe.loc[buy1ewo, 'buy_tag'] += 'buy1eworsi_'
+        dataframe.loc[buy1ewo, 'enter_tag'] += 'buy1eworsi_'
         conditions.append(buy1ewo)
 
         buy2ewo = (
@@ -335,7 +335,7 @@ class EI3v2_tag_cofi_green(IStrategy):
                 (dataframe['volume'] > 0)&
                 (dataframe['close'] < (dataframe[f'ma_sell_{self.base_nb_candles_sell.value}'] * self.high_offset.value))
         )
-        dataframe.loc[buy2ewo, 'buy_tag'] += 'buy2ewo_'
+        dataframe.loc[buy2ewo, 'enter_tag'] += 'buy2ewo_'
         conditions.append(buy2ewo)
 
         is_cofi = (
@@ -346,7 +346,7 @@ class EI3v2_tag_cofi_green(IStrategy):
                 (dataframe['adx'] > self.buy_adx.value) &
                 (dataframe['EWO'] > self.buy_ewo_high.value)
             )
-        dataframe.loc[is_cofi, 'buy_tag'] += 'cofi_'
+        dataframe.loc[is_cofi, 'enter_tag'] += 'cofi_'
         conditions.append(is_cofi)
 
         if conditions:
@@ -372,7 +372,7 @@ class EI3v2_tag_cofi_green(IStrategy):
 
 
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         conditions = []
 
         conditions.append(
@@ -405,7 +405,7 @@ class EI3v2_tag_cofi_green(IStrategy):
                            rate: float, time_in_force: str, sell_reason: str,
                            current_time: datetime, **kwargs) -> bool:
 
-        trade.sell_reason = sell_reason + "_" + trade.buy_tag
+        trade.sell_reason = sell_reason + "_" + trade.enter_tag
 
         return True
 

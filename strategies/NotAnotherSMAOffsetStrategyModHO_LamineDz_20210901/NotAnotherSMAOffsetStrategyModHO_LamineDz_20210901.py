@@ -143,10 +143,10 @@ class NotAnotherSMAOffsetStrategyModHO_LamineDz_20210901(IStrategy):
     use_custom_stoploss = True
 
     # Sell signal
-    use_sell_signal = True
-    sell_profit_only = False
-    sell_profit_offset = 0.01
-    ignore_roi_if_buy_signal = True
+    use_exit_signal = True
+    exit_profit_only = False
+    exit_profit_offset = 0.01
+    ignore_roi_if_entry_signal = True
 
     # Optional order time in force.
     order_time_in_force = {
@@ -182,8 +182,8 @@ class NotAnotherSMAOffsetStrategyModHO_LamineDz_20210901(IStrategy):
         previous_candle_1 = dataframe.iloc[-2]
 
         if (last_candle is not None):
-            #            if (sell_reason in ['roi','sell_signal','trailing_stop_loss']):
-            if (sell_reason in ['sell_signal']):
+            #            if (sell_reason in ['roi','exit_signal','trailing_stop_loss']):
+            if (sell_reason in ['exit_signal']):
                 if last_candle['block_trade_exit']:
                     return False
                 if last_candle['di_up'] and (last_candle['adx'] > previous_candle_1['adx']):
@@ -277,7 +277,7 @@ class NotAnotherSMAOffsetStrategyModHO_LamineDz_20210901(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         conditions = []
 
         conditions.append(
@@ -317,7 +317,7 @@ class NotAnotherSMAOffsetStrategyModHO_LamineDz_20210901(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         conditions = []
 
         conditions.append(

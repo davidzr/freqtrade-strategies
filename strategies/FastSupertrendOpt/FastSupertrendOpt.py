@@ -85,7 +85,7 @@ class FastSupertrendOpt(IStrategy):
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe['supertrend_1_buy'] = self.supertrend(dataframe, self.buy_m1.value, int(self.buy_p1.value))['STX'] 
         dataframe['supertrend_2_buy'] = self.supertrend(dataframe, self.buy_m2.value, int(self.buy_p2.value))['STX'] 
         dataframe['supertrend_3_buy'] = self.supertrend(dataframe, self.buy_m3.value, int(self.buy_p3.value))['STX'] 
@@ -104,7 +104,7 @@ class FastSupertrendOpt(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                (dataframe[f'supertrend_1_sell'] == 'down') &

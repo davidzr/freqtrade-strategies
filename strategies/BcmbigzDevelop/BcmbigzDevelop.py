@@ -33,12 +33,12 @@ class BcmbigzDevelop(IStrategy):
     inf_1h = "1h"
 
     # Sell signal
-    use_sell_signal = True
-    sell_profit_only = False
-    sell_profit_offset = (
+    use_exit_signal = True
+    exit_profit_only = False
+    exit_profit_offset = (
         0.001  # it doesn't meant anything, just to guarantee there is a minimal profit.
     )
-    ignore_roi_if_buy_signal = True
+    ignore_roi_if_entry_signal = True
 
     # Trailing stoploss
     trailing_stop = True
@@ -372,7 +372,7 @@ class BcmbigzDevelop(IStrategy):
 
         return True
 
-    def custom_sell(
+    def custom_exit(
         self,
         pair: str,
         trade: "Trade",
@@ -390,7 +390,7 @@ class BcmbigzDevelop(IStrategy):
 
         if last_candle is not None:
             # if (last_candle['high'] > last_candle['bb_upperband']) & (last_candle['volume'] > (last_candle_2['volume'] * 1.5)):
-            # return 'sell_signal_1'
+            # return 'exit_signal_1'
 
             if (current_profit > self.sell_custom_roi_profit_4.value) & (
                 last_candle["rsi"] < self.sell_custom_roi_rsi_4.value
@@ -585,7 +585,7 @@ class BcmbigzDevelop(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 
         conditions = []
         # reset additional dataframe rows
@@ -1191,7 +1191,7 @@ class BcmbigzDevelop(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 
         conditions = []
         # dataframe.loc[:, "sell"] = 0

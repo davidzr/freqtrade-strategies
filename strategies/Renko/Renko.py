@@ -17,10 +17,10 @@ class Renko(IStrategy):
 
     timeframe = '15m'    
     
-    use_sell_signal = True
-    sell_profit_only = True
-    sell_profit_offset = 0.1
-    ignore_roi_if_buy_signal = True
+    use_exit_signal = True
+    exit_profit_only = True
+    exit_profit_offset = 0.1
+    ignore_roi_if_entry_signal = True
  
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 
@@ -88,7 +88,7 @@ class Renko(IStrategy):
 
         return renko_df
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         for index, row in dataframe.iterrows():  
             if row['previous-trend'] == False and row['trend'] == True:
                 last_row = dataframe.loc[dataframe['date'] == row['date']][-1:] 
@@ -102,6 +102,6 @@ class Renko(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 
         return dataframe

@@ -56,9 +56,9 @@ class SlowPotato(IStrategy):
     trailing_stop_positive_offset = 0.03
     
     # Experimental settings (configuration will overide these if set)
-    use_sell_signal = True
-    sell_profit_only = True
-    ignore_roi_if_buy_signal = True
+    use_exit_signal = True
+    exit_profit_only = True
+    ignore_roi_if_entry_signal = True
     
     # Optional order type mapping
     order_types = {
@@ -81,7 +81,7 @@ class SlowPotato(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """
         If close candle breaks lower or equal to average low for last 5 days buy it
         """
@@ -95,7 +95,7 @@ class SlowPotato(IStrategy):
         ,'buy'] = 1
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """
         If open candle breaks higher or equal to average high for last 5 days sell it
         """

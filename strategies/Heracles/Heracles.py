@@ -106,7 +106,7 @@ class Heracles(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 
         IND = self.buy_params['buy-indicator-0']
         CRS = self.buy_params['buy-cross-0']
@@ -119,7 +119,7 @@ class Heracles(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         IND = self.sell_params['sell-indicator-0']
         CRS = self.sell_params['sell-cross-0']
 

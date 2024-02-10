@@ -41,7 +41,7 @@ class MACDRSI200(IStrategy):
         dataframe['sell-rsi'] = ta.RSI(dataframe)
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                     (dataframe['rsi'].rolling(8).min() < 41) &
@@ -52,7 +52,7 @@ class MACDRSI200(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                     (dataframe['rsi'].rolling(8).max() > 93) &

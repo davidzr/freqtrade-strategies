@@ -56,10 +56,10 @@ class InverseV2(IStrategy):
     # Run "populate_indicators()" only for new candle.
     process_only_new_candles = False
 
-    # These values can be overridden in the "ask_strategy" section in the config.
-    use_sell_signal = True
-    sell_profit_only = False
-    ignore_roi_if_buy_signal = False
+    # These values can be overridden in the "exit_pricing" section in the config.
+    use_exit_signal = True
+    exit_profit_only = False
+    ignore_roi_if_entry_signal = False
 
     # Number of candles the strategy requires before producing valid signals
     startup_candle_count: int = 200
@@ -108,8 +108,8 @@ class InverseV2(IStrategy):
         previous_candle_1 = dataframe.iloc[-2]
 
         if (last_candle is not None):
-            # if (sell_reason in ['roi','sell_signal','trailing_stop_loss']):
-            if (sell_reason in ['sell_signal']):
+            # if (sell_reason in ['roi','exit_signal','trailing_stop_loss']):
+            if (sell_reason in ['exit_signal']):
                 if last_candle['di_up'] and (last_candle['adx'] > previous_candle_1['adx']):
                     return False
         return True
@@ -230,7 +230,7 @@ class InverseV2(IStrategy):
         
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         
         dataframe.loc[
             (
@@ -255,7 +255,7 @@ class InverseV2(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         
         dataframe.loc[
             (

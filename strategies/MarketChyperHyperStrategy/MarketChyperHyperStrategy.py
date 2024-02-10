@@ -90,10 +90,10 @@ class MarketChyperHyperStrategy(IStrategy):
     # Run "populate_indicators()" only for new candle.
     process_only_new_candles = False
 
-    # These values can be overridden in the "ask_strategy" section in the config.
-    use_sell_signal = True
-    sell_profit_only = False
-    ignore_roi_if_buy_signal = False
+    # These values can be overridden in the "exit_pricing" section in the config.
+    use_exit_signal = True
+    exit_profit_only = False
+    ignore_roi_if_entry_signal = False
 
     # Number of candles the strategy requires before producing valid signals
     startup_candle_count: int = 400
@@ -290,7 +290,7 @@ class MarketChyperHyperStrategy(IStrategy):
         dataframe['macdsignal'] = macd['macdsignal']  # Signal - Orange TradingView Line (Bearish if on top)
 
         # Initialize total signal variables (should be 0 = false by default)
-        dataframe['total_buy_signal_strength'] = dataframe['total_sell_signal_strength'] = 0
+        dataframe['total_buy_signal_strength'] = dataframe['total_exit_signal_strength'] = 0
 
 
         #divergences
@@ -303,7 +303,7 @@ class MarketChyperHyperStrategy(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """
         Based on TA indicators, populates the buy signal for the given dataframe
         :param dataframe: DataFrame populated with indicators
@@ -367,7 +367,7 @@ class MarketChyperHyperStrategy(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe = self.market_cipher(dataframe)
 
        #CALCULATE WT OVERSOLD
@@ -387,7 +387,7 @@ class MarketChyperHyperStrategy(IStrategy):
         dataframe.loc[(dataframe['trend'] == 'upwards') & (dataframe['wtCrossDown'] & dataframe['wtOverbought']),
                         'sell_wavetrend_weight'] = self.sell_uptrend_wavetrend_weight.value
 
-        dataframe['total_sell_signal_strength'] += dataframe['sell_wavetrend_weight']
+        dataframe['total_exit_signal_strength'] += dataframe['sell_wavetrend_weight']
 
         #rsi div and rsi vaÃ±ur buy_rsi_div buy_rsi_div_weight
         dataframe.loc[(dataframe['trend'] == 'downwards') & (dataframe['bearish_div']),
@@ -397,20 +397,20 @@ class MarketChyperHyperStrategy(IStrategy):
         dataframe.loc[(dataframe['trend'] == 'upwards') & (dataframe['bearish_div']),
                         'sell_rsi_divergence_weight'] = self.sell_uptrend_rsi_divergence_weight.value
 
-        dataframe['total_sell_signal_strength'] += dataframe['sell_rsi_divergence_weight']
+        dataframe['total_exit_signal_strength'] += dataframe['sell_rsi_divergence_weight']
 
         # Check if buy signal should be sent depending on the current trend
         # Check if buy signal should be sent depending on the current trend
         dataframe.loc[
             (
                     (dataframe['trend'] == 'downwards') &
-                    (dataframe['total_sell_signal_strength'] >= self.sell_downtrend_total_signal_needed.value)
+                    (dataframe['total_exit_signal_strength'] >= self.sell_downtrend_total_signal_needed.value)
             ) | (
                     (dataframe['trend'] == 'sideways') &
-                    (dataframe['total_sell_signal_strength'] >= self.sell_sideways_total_signal_needed.value)
+                    (dataframe['total_exit_signal_strength'] >= self.sell_sideways_total_signal_needed.value)
             ) | (
                     (dataframe['trend'] == 'upwards') &
-                    (dataframe['total_sell_signal_strength'] >= self.sell_uptrend_total_signal_needed.value)
+                    (dataframe['total_exit_signal_strength'] >= self.sell_uptrend_total_signal_needed.value)
             ), 'sell'] = 1
 
 

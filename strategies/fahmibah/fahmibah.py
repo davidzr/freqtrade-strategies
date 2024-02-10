@@ -84,9 +84,9 @@ class fahmibah(IStrategy):
     timeframe = '5m'
 
     # Make sure these match or are not overridden in config
-    use_sell_signal = False
-    sell_profit_only = False
-    ignore_roi_if_buy_signal = False
+    use_exit_signal = False
+    exit_profit_only = False
+    ignore_roi_if_entry_signal = False
 
     # Custom stoploss
     use_custom_stoploss = True
@@ -206,9 +206,9 @@ class fahmibah(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         conditions = []
-        dataframe.loc[:, 'buy_tag'] = ''
+        dataframe.loc[:, 'enter_tag'] = ''
 
         lambo1 = (
             bool(self.lambo1_enabled.value) &
@@ -216,7 +216,7 @@ class fahmibah(IStrategy):
             (dataframe['rsi_4'] < self.lambo1_rsi_4_limit.value) &
             (dataframe['rsi_14'] < self.lambo1_rsi_14_limit.value)
         )
-        dataframe.loc[lambo1, 'buy_tag'] += 'lambo1_'
+        dataframe.loc[lambo1, 'enter_tag'] += 'lambo1_'
         conditions.append(lambo1)
 
         clucHA = (
@@ -235,7 +235,7 @@ class fahmibah(IStrategy):
                      (dataframe['ha_close'] < self.close_bblower.value * dataframe['bb_lowerband'])
              ))
         )
-        dataframe.loc[clucHA, 'buy_tag'] += 'clucHA_'
+        dataframe.loc[clucHA, 'enter_tag'] += 'clucHA_'
         conditions.append(clucHA)
 
         dataframe.loc[
@@ -245,7 +245,7 @@ class fahmibah(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[(), 'sell'] = 1
         return dataframe
 
@@ -253,6 +253,6 @@ class fahmibah(IStrategy):
                            rate: float, time_in_force: str, sell_reason: str,
                            current_time: datetime, **kwargs) -> bool:
 
-        trade.sell_reason = sell_reason + "_" + trade.buy_tag
+        trade.sell_reason = sell_reason + "_" + trade.enter_tag
 
         return True

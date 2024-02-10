@@ -22,8 +22,8 @@ class SMAOffsetV2(IStrategy):
     stoploss = -0.20
     timeframe = '5m'
     informative_timeframe = '1h'
-    use_sell_signal = True
-    sell_profit_only = False
+    use_exit_signal = True
+    exit_profit_only = False
     process_only_new_candles = True
 
     use_custom_stoploss = True
@@ -84,7 +84,7 @@ class SMAOffsetV2(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                 (dataframe['go_long'] > 0)
@@ -96,7 +96,7 @@ class SMAOffsetV2(IStrategy):
             'buy'] = 1
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                 (

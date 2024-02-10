@@ -50,10 +50,10 @@ class Uptrend(IStrategy):
     # Run "populate_indicators()" only for new candle.
     process_only_new_candles = False
 
-    # These values can be overridden in the "ask_strategy" section in the config.
-    use_sell_signal = True
-    sell_profit_only = False
-    ignore_roi_if_buy_signal = False
+    # These values can be overridden in the "exit_pricing" section in the config.
+    use_exit_signal = True
+    exit_profit_only = False
+    ignore_roi_if_entry_signal = False
 
     # Number of candles the strategy requires before producing valid signals
     startup_candle_count: int = 30
@@ -96,7 +96,7 @@ class Uptrend(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                 (dataframe['rsi'] < 80) &
@@ -108,7 +108,7 @@ class Uptrend(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                 (dataframe['mama_diff_ratio'] < 0.01) &
@@ -227,7 +227,7 @@ class SuperBuy(Uptrend):
             df_mask = count >= 1 / 100 * all_best_points.shape[0]
             count = count[df_mask]
 
-            if not count.empty and not column in ['buy', 'buy_tag']:
+            if not count.empty and not column in ['buy', 'enter_tag']:
                 count_normalized = count / all_best_points.shape[0]
                 all_bad_points_values_count_normalized = all_bad_points_values_count / all_bad_points.shape[0]
                 df_all = count.to_frame(name='best_points').join(all_bad_points_values_count.to_frame(name='bad_points'))
@@ -246,7 +246,7 @@ class SuperBuy(Uptrend):
                 for elt in values:
                     best_indicators.append(f"dataframe['{column}'] == {elt}")
 
-            if column in ['buy', 'buy_tag']:
+            if column in ['buy', 'enter_tag']:
                 print(column)
                 print(all_best_points[column].value_counts())
             elif not count.empty:
@@ -293,7 +293,7 @@ class SuperBuy(Uptrend):
         columns.remove('date')
         columns.remove('sell')
         columns.remove('buy')
-        columns.remove('buy_tag')
+        columns.remove('enter_tag')
         columns = [column for column in columns if not 'date' in column]
 
         # generated random conditions
@@ -413,12 +413,12 @@ class SuperBuy(Uptrend):
             return []
         return buy_conds
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         buy_conds = self.generate_superbuy_signal(dataframe, metadata)
 
         if self.config['runmode'].value in ('backtest'):  # backtest, we want to check must common buy tags...
-            dataframe = super().populate_buy_trend(dataframe, metadata)  # get buy tags
-            self.common_points_for_every_best_entry(dataframe, metadata, self.columns + ['buy', 'buy_tag'])
+            dataframe = super().populate_entry_trend(dataframe, metadata)  # get buy tags
+            self.common_points_for_every_best_entry(dataframe, metadata, self.columns + ['buy', 'enter_tag'])
         elif self.config['runmode'].value in ('hyperopt'):  # hyperopt, we want to test new buy signals
             is_additional_check = (
                     (  # main buy signals found

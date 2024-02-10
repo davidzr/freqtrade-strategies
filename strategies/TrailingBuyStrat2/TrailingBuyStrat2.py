@@ -21,7 +21,7 @@ class TrailingBuyStrat2(YourStrat):
     # This class is designed to inherit from yours and starts trailing buy with your buy signals
     # Trailing buy starts at any buy signal and will move to next candles if the trailing still active
     # Trailing buy stops  with BUY if : price decreases and rises again more than trailing_buy_offset
-    # Trailing buy stops with NO BUY : current price is > initial price * (1 +  trailing_buy_max) OR custom_sell tag
+    # Trailing buy stops with NO BUY : current price is > initial price * (1 +  trailing_buy_max) OR custom_exit tag
     # IT IS NOT COMPATIBLE WITH BACKTEST/HYPEROPT
     #
 
@@ -46,7 +46,7 @@ class TrailingBuyStrat2(YourStrat):
         'trailing_buy_order_started': False,
         'trailing_buy_order_uplimit': 0,
         'start_trailing_price': 0,
-        'buy_tag': None,
+        'enter_tag': None,
         'start_trailing_time': None,
         'offset': 0,
         'allow_trailing': False,
@@ -161,14 +161,14 @@ class TrailingBuyStrat2(YourStrat):
                             # self.custom_info_trail_buy[pair]['trailing_buy']['trailing_buy_order_started'] = True
                             # self.custom_info_trail_buy[pair]['trailing_buy']['trailing_buy_order_uplimit'] = last_candle['close']
                             # self.custom_info_trail_buy[pair]['trailing_buy']['start_trailing_price'] = last_candle['close']
-                            # self.custom_info_trail_buy[pair]['trailing_buy']['buy_tag'] = f"initial_buy_tag (strat trail price {last_candle['close']})"
+                            # self.custom_info_trail_buy[pair]['trailing_buy']['enter_tag'] = f"initial_enter_tag (strat trail price {last_candle['close']})"
                             # self.custom_info_trail_buy[pair]['trailing_buy']['start_trailing_time'] = datetime.now(timezone.utc)
                             # self.custom_info_trail_buy[pair]['trailing_buy']['offset'] = 0
 
                             trailing_buy['trailing_buy_order_started'] = True
                             trailing_buy['trailing_buy_order_uplimit'] = last_candle['close']
                             trailing_buy['start_trailing_price'] = last_candle['close']
-                            trailing_buy['buy_tag'] = last_candle['buy_tag']
+                            trailing_buy['enter_tag'] = last_candle['enter_tag']
                             trailing_buy['start_trailing_time'] = datetime.now(timezone.utc)
                             trailing_buy['offset'] = 0
                             
@@ -222,8 +222,8 @@ class TrailingBuyStrat2(YourStrat):
         
         return val
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        dataframe = super().populate_buy_trend(dataframe, metadata)
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+        dataframe = super().populate_entry_trend(dataframe, metadata)
 
         if self.trailing_buy_order_enabled and self.config['runmode'].value in ('live', 'dry_run'): 
             last_candle = dataframe.iloc[-1].squeeze()
@@ -235,13 +235,13 @@ class TrailingBuyStrat2(YourStrat):
                         logger.info(f"Set 'allow_trailing' to True for {metadata['pair']} to start trailing!!!")
                         # self.custom_info_trail_buy[metadata['pair']]['trailing_buy']['allow_trailing'] = True
                         trailing_buy['allow_trailing'] = True
-                        initial_buy_tag = last_candle['buy_tag'] if 'buy_tag' in last_candle else 'buy signal'
-                        dataframe.loc[:, 'buy_tag'] = f"{initial_buy_tag} (start trail price {last_candle['close']})"
+                        initial_enter_tag = last_candle['enter_tag'] if 'enter_tag' in last_candle else 'buy signal'
+                        dataframe.loc[:, 'enter_tag'] = f"{initial_enter_tag} (start trail price {last_candle['close']})"
             else:
                 if (trailing_buy['trailing_buy_order_started'] == True):
                     logger.info(f"Continue trailing for {metadata['pair']}. Manually trigger buy signal!!")
                     dataframe.loc[:,'buy'] = 1
-                    dataframe.loc[:, 'buy_tag'] = trailing_buy['buy_tag']
+                    dataframe.loc[:, 'enter_tag'] = trailing_buy['enter_tag']
                     # dataframe['buy'] = 1
 
         return dataframe

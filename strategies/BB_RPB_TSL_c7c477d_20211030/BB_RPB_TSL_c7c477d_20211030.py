@@ -134,7 +134,7 @@ class BB_RPB_TSL_c7c477d_20211030(IStrategy):
 
     # Custom stoploss
     use_custom_stoploss = True
-    use_sell_signal = True
+    use_exit_signal = True
 
     ############################################################################
 
@@ -374,10 +374,10 @@ class BB_RPB_TSL_c7c477d_20211030(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 
         conditions = []
-        dataframe.loc[:, 'buy_tag'] = ''
+        dataframe.loc[:, 'enter_tag'] = ''
 
         is_dip = (
                 (dataframe[f'rmi_length_{self.buy_rmi_length.value}'] < self.buy_rmi.value) &
@@ -475,32 +475,32 @@ class BB_RPB_TSL_c7c477d_20211030(IStrategy):
 
         # condition append
         conditions.append(is_BB_checked)                                           # ~1.61 / 87.9% / 29.36%
-        dataframe.loc[is_BB_checked, 'buy_tag'] += 'bb '
+        dataframe.loc[is_BB_checked, 'enter_tag'] += 'bb '
 
         conditions.append(is_local_uptrend)                                        # ~3.5 / 89.9% / 56.4%
-        dataframe.loc[is_local_uptrend, 'buy_tag'] += 'local uptrend '
+        dataframe.loc[is_local_uptrend, 'enter_tag'] += 'local uptrend '
 
         conditions.append(is_ewo)                                                  # ~2.19 / 92.6% / 28.12%
-        dataframe.loc[is_ewo, 'buy_tag'] += 'ewo '
+        dataframe.loc[is_ewo, 'enter_tag'] += 'ewo '
 
         conditions.append(is_ewo_2)                                                # ~3.65 / 82.5% / 21.56%
-        dataframe.loc[is_ewo_2, 'buy_tag'] += 'ewo2 '
+        dataframe.loc[is_ewo_2, 'enter_tag'] += 'ewo2 '
 
         conditions.append(is_cofi_checked)                                         # ~2.57 / 82.2% / 52.42%
-        dataframe.loc[is_cofi_checked, 'buy_tag'] += 'cofi '
+        dataframe.loc[is_cofi_checked, 'enter_tag'] += 'cofi '
 
         conditions.append(is_nfi_32)                                               # ~2.3 / 88.2% / 42.35%
-        dataframe.loc[is_nfi_32, 'buy_tag'] += 'nfi 32 '
+        dataframe.loc[is_nfi_32, 'enter_tag'] += 'nfi 32 '
 
         conditions.append(is_nfi_33)                                               # ~0.11 / 100%
-        dataframe.loc[is_nfi_33, 'buy_tag'] += 'nfi 33 '
+        dataframe.loc[is_nfi_33, 'enter_tag'] += 'nfi 33 '
 
         if conditions:
             dataframe.loc[ is_btc_safe & reduce(lambda x, y: x | y, conditions), 'buy' ] = 1
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 
         dataframe.loc[
             (

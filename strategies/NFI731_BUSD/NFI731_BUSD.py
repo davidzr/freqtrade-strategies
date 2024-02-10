@@ -35,9 +35,9 @@ log = logging.getLogger(__name__)
 ##   Highly recommended to blacklist leveraged tokens (*BULL, *BEAR, *UP, *DOWN etc).                    ##
 ##   Ensure that you don't override any variables in you config.json. Especially                         ##
 ##   the timeframe (must be 5m).                                                                         ##
-##     use_sell_signal must set to true (or not set at all).                                             ##
-##     sell_profit_only must set to false (or not set at all).                                           ##
-##     ignore_roi_if_buy_signal must set to true (or not set at all).                                    ##
+##     use_exit_signal must set to true (or not set at all).                                             ##
+##     exit_profit_only must set to false (or not set at all).                                           ##
+##     ignore_roi_if_entry_signal must set to true (or not set at all).                                    ##
 ##                                                                                                       ##
 ###########################################################################################################
 ##               HOLD SUPPORT                                                                            ##
@@ -107,10 +107,10 @@ class NFI731_BUSD(IStrategy):
     # Run "populate_indicators()" only for new candle.
     process_only_new_candles = True
 
-    # These values can be overridden in the "ask_strategy" section in the config.
-    use_sell_signal = True
-    sell_profit_only = False
-    ignore_roi_if_buy_signal = True
+    # These values can be overridden in the "exit_pricing" section in the config.
+    use_exit_signal = True
+    exit_profit_only = False
+    ignore_roi_if_entry_signal = True
 
     # Number of candles the strategy requires before producing valid signals
     startup_candle_count: int = 480
@@ -2909,7 +2909,7 @@ class NFI731_BUSD(IStrategy):
 
         return False, None
 
-    def custom_sell(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float,
+    def custom_exit(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float,
                     current_profit: float, **kwargs):
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
         last_candle = dataframe.iloc[-1].squeeze()
@@ -3012,43 +3012,43 @@ class NFI731_BUSD(IStrategy):
         if self.sell_condition_1_enable.value & (last_candle['rsi'] > self.sell_rsi_bb_1.value) & (last_candle['close'] > last_candle['bb20_2_upp']) & (previous_candle_1['close'] > previous_candle_1['bb20_2_upp']) & (previous_candle_2['close'] > previous_candle_2['bb20_2_upp']) & (previous_candle_3['close'] > previous_candle_3['bb20_2_upp']) & (previous_candle_4['close'] > previous_candle_4['bb20_2_upp']) & (previous_candle_5['close'] > previous_candle_5['bb20_2_upp']):
             if (last_candle['close'] > last_candle['ema_200']):
                 if (current_profit > 0.0):
-                    return 'sell_signal_1_1_1'
+                    return 'exit_signal_1_1_1'
                 elif (max_loss > 0.1):
-                    return 'sell_signal_1_1_2'
+                    return 'exit_signal_1_1_2'
             else:
-                return 'sell_signal_1_2'
+                return 'exit_signal_1_2'
 
         # Sell signal 2
         elif (self.sell_condition_2_enable.value) & (last_candle['rsi'] > self.sell_rsi_bb_2.value) & (last_candle['close'] > last_candle['bb20_2_upp']) & (previous_candle_1['close'] > previous_candle_1['bb20_2_upp']) & (previous_candle_2['close'] > previous_candle_2['bb20_2_upp']):
             if (last_candle['close'] > last_candle['ema_200']):
                 if (current_profit > 0.0):
-                    return 'sell_signal_2_1_1'
+                    return 'exit_signal_2_1_1'
                 elif (max_loss > 0.07):
-                    return 'sell_signal_2_1_2'
+                    return 'exit_signal_2_1_2'
             else:
                 if (current_profit > 0.0):
-                    return 'sell_signal_2_2_1'
+                    return 'exit_signal_2_2_1'
                 elif (max_loss > 0.07):
-                    return 'sell_signal_2_2_2'
+                    return 'exit_signal_2_2_2'
 
         # Sell signal 4
         elif self.sell_condition_4_enable.value & (last_candle['rsi'] > self.sell_dual_rsi_rsi_4.value) & (last_candle['rsi_1h'] > self.sell_dual_rsi_rsi_1h_4.value):
-            return 'sell_signal_4'
+            return 'exit_signal_4'
 
         # Sell signal 6
         elif self.sell_condition_6_enable.value & (last_candle['close'] < last_candle['ema_200']) & (last_candle['close'] > last_candle['ema_50']) & (last_candle['rsi'] > self.sell_rsi_under_6.value):
             if (current_profit > 0.0):
-                    return 'sell_signal_6_1'
+                    return 'exit_signal_6_1'
             elif (max_loss > 0.08):
-                return 'sell_signal_6_2'
+                return 'exit_signal_6_2'
 
         # Sell signal 7
         elif self.sell_condition_7_enable.value & (last_candle['rsi_1h'] > self.sell_rsi_1h_7.value) & (last_candle['crossed_below_ema_12_26']):
-            return 'sell_signal_7'
+            return 'exit_signal_7'
 
         # Sell signal 8
         elif self.sell_condition_8_enable.value & (last_candle['close'] > last_candle['bb20_2_upp_1h'] * self.sell_bb_relative_8.value):
-            return 'sell_signal_8'
+            return 'exit_signal_8'
 
         return None
 
@@ -3492,7 +3492,7 @@ class NFI731_BUSD(IStrategy):
         return dataframe
 
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         conditions = []
         buy_protection_list = []
 
@@ -4301,7 +4301,7 @@ class NFI731_BUSD(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[:, 'sell'] = 0
         return dataframe
 
@@ -4324,7 +4324,7 @@ class NFI731_BUSD(IStrategy):
         :param time_in_force: Time in force. Defaults to GTC (Good-til-cancelled).
         :param sell_reason: Sell reason.
             Can be any of ['roi', 'stop_loss', 'stoploss_on_exchange', 'trailing_stop_loss',
-                           'sell_signal', 'force_sell', 'emergency_sell']
+                           'exit_signal', 'force_exit', 'emergency_sell']
         :param **kwargs: Ensure to keep this here so updates to this won't break your strategy.
         :return bool: When True is returned, then the sell-order is placed on the exchange.
             False aborts the process
@@ -4343,7 +4343,7 @@ class NFI731_BUSD(IStrategy):
 
             trade_profit_ratio = self.hold_trade_ids[trade.id]
             current_profit_ratio = trade.calc_profit_ratio(rate)
-            if sell_reason == "force_sell":
+            if sell_reason == "force_exit":
                 formatted_profit_ratio = "{}%".format(trade_profit_ratio * 100)
                 formatted_current_profit_ratio = "{}%".format(current_profit_ratio * 100)
                 log.warning(

@@ -63,8 +63,8 @@ class MADisplaceV3(IStrategy):
 
     timeframe = '5m'
 
-    use_sell_signal = True
-    sell_profit_only = False
+    use_exit_signal = True
+    exit_profit_only = False
 
     process_only_new_candles = True
 
@@ -142,7 +142,7 @@ class MADisplaceV3(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 
         # calculate indicators with adjustable params for hyperopt
         # it's calling multiple times and dataframe overrides same columns
@@ -170,7 +170,7 @@ class MADisplaceV3(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
 
         if self.config['runmode'].value == 'hyperopt' and 'uptrend' not in dataframe:
             informative = self.get_informative_indicators(metadata)

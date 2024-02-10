@@ -66,10 +66,10 @@ class ClucHAwerk(IStrategy):
     startup_candle_count: int = 168
 
     # Make sure these match or are not overridden in config
-    use_sell_signal = True
-    sell_profit_only = False
-    sell_profit_offset = 0.0
-    ignore_roi_if_buy_signal = True
+    use_exit_signal = True
+    exit_profit_only = False
+    exit_profit_offset = 0.0
+    ignore_roi_if_entry_signal = True
 
     def informative_pairs(self):
         pairs = self.dp.current_whitelist()
@@ -112,7 +112,7 @@ class ClucHAwerk(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         params = self.buy_params
 
         dataframe.loc[
@@ -137,7 +137,7 @@ class ClucHAwerk(IStrategy):
 
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         params = self.sell_params
 
         dataframe.loc[
@@ -152,10 +152,10 @@ class ClucHAwerk(IStrategy):
 
 class ClucHAwerk_ETH(ClucHAwerk):
 
-    use_sell_signal = True
-    sell_profit_only = True
-    sell_profit_offset = 0.02
-    ignore_roi_if_buy_signal = True
+    use_exit_signal = True
+    exit_profit_only = True
+    exit_profit_offset = 0.02
+    ignore_roi_if_entry_signal = True
 
     # hyperopt --config user_data/config-backtest-ETH.json --hyperopt ClucHAwerkHyperopt_ETH --hyperopt-loss SortinoHyperOptLoss --strategy ClucHAwerk_ETH -e 500 --spaces buy --timeframe 1m --timerange 20210101-
     # 483/500:   1880 trades. 1054/0/826 Wins/Draws/Losses. Avg profit   0.76%. Median profit   1.12%. Total profit  0.14286503 ETH ( 1426.37Σ%). Avg duration  45.3 min. Objective: -623.10584

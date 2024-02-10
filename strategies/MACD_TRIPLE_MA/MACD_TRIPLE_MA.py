@@ -58,7 +58,7 @@ class MACD_TRIPLE_MA(IStrategy):
 
         return dataframe
 
-    def populate_buy_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                     qtpylib.crossed_above(dataframe['macd'], dataframe['macdsignal']) &
@@ -69,7 +69,7 @@ class MACD_TRIPLE_MA(IStrategy):
             'buy'] = 1
         return dataframe
 
-    def populate_sell_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe.loc[
             (
                      qtpylib.crossed_below(dataframe['macd'], dataframe['macdsignal']) &
